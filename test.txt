@@ -1,3 +1,5 @@
 This is a test.
+<<<<<<< HEAD
 This is modified in dev branch.
 It is modified in branch main
+This is modified in dev branch now.
