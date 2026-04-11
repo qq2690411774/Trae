@@ -6,4 +6,5 @@ main(int argc,char **argv)
 	printf("I am from the past\n");
 	printf("My destination is future\n");
 	printf("This line is from branch dev\n");
+	printf("Before bug fixing\n");
 }
