@@ -1,5 +1,10 @@
 import os
 from typing import Optional
+from dotenv import load_dotenv
+
+load_dotenv()
+
+_runtime_api_keys: dict[str, str] = {}
 
 LLM_MODELS = {
     "gpt-4o-mini": {
@@ -58,14 +63,25 @@ DEFAULT_MODEL = "gpt-4o-mini"
 LLM_TIMEOUT = 10
 LLM_MAX_RETRIES = 1
 
-CORS_ORIGINS = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
+CORS_ORIGINS = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://localhost:5174"]
+
+
+def _get_api_key(env_var: str) -> str:
+    if env_var in _runtime_api_keys and _runtime_api_keys[env_var]:
+        return _runtime_api_keys[env_var]
+    return os.environ.get(env_var, "")
+
+
+def set_api_key(env_var: str, api_key: str) -> None:
+    _runtime_api_keys[env_var] = api_key
+    os.environ[env_var] = api_key
 
 
 def get_model_config(model_id: str) -> Optional[dict]:
     config = LLM_MODELS.get(model_id)
     if not config:
         return None
-    api_key = os.environ.get(config["api_key_env"], "")
+    api_key = _get_api_key(config["api_key_env"])
     return {
         **config,
         "api_key": api_key,
@@ -75,11 +91,12 @@ def get_model_config(model_id: str) -> Optional[dict]:
 def get_available_models() -> list[dict]:
     result = []
     for model_id, config in LLM_MODELS.items():
-        api_key = os.environ.get(config["api_key_env"], "")
+        api_key = _get_api_key(config["api_key_env"])
         result.append({
             "id": model_id,
             "name": config["name"],
             "provider": config["provider"],
             "available": bool(api_key),
+            "api_key_env": config["api_key_env"],
         })
     return result

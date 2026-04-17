@@ -99,3 +99,4 @@ class ModelInfo(BaseModel):
     name: str
     provider: str
     available: bool
+    api_key_env: str = ""

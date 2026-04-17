@@ -1,0 +1,4 @@
+risk=RiskLevel.MEDIUM
+irreversible=False
+external=True
+confirmation=False

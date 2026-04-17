@@ -1,0 +1,5 @@
+signals: risk=RiskLevel.MEDIUM irr=False ext=True conf=False
+error=MODEL_NOT_CONFIGURED:gpt-4o-mini
+llm_output.decision=DecisionType.CONFIRM_FIRST
+final_decision=DecisionType.EXECUTE_AND_TELL
+fallback=True

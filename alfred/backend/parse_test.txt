@@ -1,0 +1,5 @@
+decision=DecisionType.CONFIRM_FIRST
+confidence=0.5
+intent_resolved=False
+failed=False
+rationale=I think this should be confirmed before sending. The user seems unsure.
