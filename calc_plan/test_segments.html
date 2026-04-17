@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>段显示测试</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a1a2e;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #4ecca3;
+            margin-bottom: 15px;
+        }
+        .digit {
+            position: relative;
+            width: 40px;
+            height: 70px;
+            background: #1a0a0a;
+            border: 2px solid #4a3a3a;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 10px;
+        }
+        .segment {
+            position: absolute;
+            background: #ff0000;
+            box-shadow: 0 0 6px #ff0000, 0 0 12px #ff0000;
+        }
+        /* 正确的段位置 */
+        .segment-a {
+            top: 5px;
+            left: 10px;
+            width: 20px;
+            height: 4px;
+        }
+        .segment-b {
+            top: 10px;
+            right: 5px;
+            width: 4px;
+            height: 25px;
+        }
+        .segment-c {
+            bottom: 10px;
+            right: 5px;
+            width: 4px;
+            height: 25px;
+        }
+        .segment-d {
+            bottom: 5px;
+            left: 10px;
+            width: 20px;
+            height: 4px;
+        }
+        .segment-e {
+            bottom: 10px;
+            left: 5px;
+            width: 4px;
+            height: 25px;
+        }
+        .segment-f {
+            top: 10px;
+            left: 5px;
+            width: 4px;
+            height: 25px;
+        }
+        .segment-g {
+            top: 33px;
+            left: 10px;
+            width: 20px;
+            height: 4px;
+        }
+        .segment-dp {
+            bottom: 5px;
+            right: -8px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-section">
+        <h2>段位置测试</h2>
+        <p>测试各个段的位置是否正确：</p>
+        
+        <div class="digit">
+            <div class="segment segment-a"></div>
+        </div>
+        
+        <div class="digit">
+            <div class="segment segment-b"></div>
+        </div>
+        
+        <div class="digit">
+            <div class="segment segment-c"></div>
+        </div>
+        
+        <div class="digit">
+            <div class="segment segment-d"></div>
+        </div>
+        
+        <div class="digit">
+            <div class="segment segment-e"></div>
+        </div>
+        
+        <div class="digit">
+            <div class="segment segment-f"></div>
+        </div>
+        
+        <div class="digit">
+            <div class="segment segment-g"></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>数字测试</h2>
+        <p>测试数字5和6的显示：</p>
+        
+        <div class="digit">
+            <div class="segment segment-a"></div>
+            <div class="segment segment-c"></div>
+            <div class="segment segment-d"></div>
+            <div class="segment segment-f"></div>
+            <div class="segment segment-g"></div>
+        </div>
+        <span>数字5</span>
+        
+        <div class="digit">
+            <div class="segment segment-a"></div>
+            <div class="segment segment-c"></div>
+            <div class="segment segment-d"></div>
+            <div class="segment segment-e"></div>
+            <div class="segment segment-f"></div>
+            <div class="segment segment-g"></div>
+        </div>
+        <span>数字6</span>
+    </div>
+    
+    <div class="test-section">
+        <h2>小数点测试</h2>
+        <p>测试小数点显示：</p>
+        
+        <div class="digit">
+            <div class="segment segment-a"></div>
+            <div class="segment segment-b"></div>
+            <div class="segment segment-c"></div>
+            <div class="segment segment-d"></div>
+            <div class="segment segment-g"></div>
+        </div>
+        <div class="digit">
+            <div class="segment segment-dp"></div>
+        </div>
+        <div class="digit">
+            <div class="segment segment-b"></div>
+            <div class="segment segment-c"></div>
+        </div>
+        <span>3.1</span>
+    </div>
+</body>
+</html>

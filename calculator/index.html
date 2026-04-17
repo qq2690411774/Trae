@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科学计算器</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="calculator">
+        <div class="mode-switch">
+            <button class="mode-btn active" id="basicMode" onclick="switchMode('basic')">普通</button>
+            <button class="mode-btn" id="scientificMode" onclick="switchMode('scientific')">科学</button>
+        </div>
+        <div class="display">
+            <div class="display-history" id="history"></div>
+            <div class="display-result" id="result">0</div>
+        </div>
+        
+        <div class="buttons" id="basicButtons">
+            <button class="btn operator" onclick="clearAll()">C</button>
+            <button class="btn operator" onclick="deleteLast()">DEL</button>
+            <button class="btn operator" onclick="inputOperator('%')">%</button>
+            <button class="btn operator" onclick="inputOperator('/')">/</button>
+
+            <button class="btn" onclick="inputNumber('7')">7</button>
+            <button class="btn" onclick="inputNumber('8')">8</button>
+            <button class="btn" onclick="inputNumber('9')">9</button>
+            <button class="btn operator" onclick="inputOperator('*')">×</button>
+
+            <button class="btn" onclick="inputNumber('4')">4</button>
+            <button class="btn" onclick="inputNumber('5')">5</button>
+            <button class="btn" onclick="inputNumber('6')">6</button>
+            <button class="btn operator" onclick="inputOperator('-')">-</button>
+
+            <button class="btn" onclick="inputNumber('1')">1</button>
+            <button class="btn" onclick="inputNumber('2')">2</button>
+            <button class="btn" onclick="inputNumber('3')">3</button>
+            <button class="btn operator" onclick="inputOperator('+')">+</button>
+
+            <button class="btn" onclick="inputNumber('0')">0</button>
+            <button class="btn" onclick="inputDot()">.</button>
+            <button class="btn equals" onclick="calculate()">=</button>
+        </div>
+
+        <div class="buttons scientific-buttons" id="scientificButtons" style="display: none;">
+            <button class="btn scientific" onclick="scientificFunc('sin')">sin</button>
+            <button class="btn scientific" onclick="scientificFunc('cos')">cos</button>
+            <button class="btn scientific" onclick="scientificFunc('tan')">tan</button>
+            <button class="btn scientific" onclick="scientificFunc('log')">log</button>
+
+            <button class="btn scientific" onclick="scientificFunc('asin')">sin⁻¹</button>
+            <button class="btn scientific" onclick="scientificFunc('acos')">cos⁻¹</button>
+            <button class="btn scientific" onclick="scientificFunc('atan')">tan⁻¹</button>
+            <button class="btn scientific" onclick="scientificFunc('ln')">ln</button>
+
+            <button class="btn scientific" onclick="scientificFunc('sqrt')">√</button>
+            <button class="btn scientific" onclick="scientificFunc('square')">x²</button>
+            <button class="btn scientific" onclick="scientificFunc('cube')">x³</button>
+            <button class="btn scientific" onclick="scientificFunc('pow')">xʸ</button>
+
+            <button class="btn scientific" onclick="scientificFunc('pi')">π</button>
+            <button class="btn scientific" onclick="scientificFunc('e')">e</button>
+            <button class="btn scientific" onclick="scientificFunc('factorial')">n!</button>
+            <button class="btn scientific" onclick="scientificFunc('abs')">|x|</button>
+
+            <button class="btn scientific" onclick="inputNumber('(')">(</button>
+            <button class="btn scientific" onclick="inputNumber(')')">)</button>
+            <button class="btn scientific" onclick="scientificFunc('inv')">1/x</button>
+            <button class="btn scientific" onclick="scientificFunc('negate')">±</button>
+
+            <button class="btn operator" onclick="clearAll()">C</button>
+            <button class="btn operator" onclick="deleteLast()">DEL</button>
+            <button class="btn operator" onclick="inputOperator('%')">%</button>
+            <button class="btn operator" onclick="inputOperator('/')">/</button>
+
+            <button class="btn" onclick="inputNumber('7')">7</button>
+            <button class="btn" onclick="inputNumber('8')">8</button>
+            <button class="btn" onclick="inputNumber('9')">9</button>
+            <button class="btn operator" onclick="inputOperator('*')">×</button>
+
+            <button class="btn" onclick="inputNumber('4')">4</button>
+            <button class="btn" onclick="inputNumber('5')">5</button>
+            <button class="btn" onclick="inputNumber('6')">6</button>
+            <button class="btn operator" onclick="inputOperator('-')">-</button>
+
+            <button class="btn" onclick="inputNumber('1')">1</button>
+            <button class="btn" onclick="inputNumber('2')">2</button>
+            <button class="btn" onclick="inputNumber('3')">3</button>
+            <button class="btn operator" onclick="inputOperator('+')">+</button>
+
+            <button class="btn" onclick="inputNumber('0')">0</button>
+            <button class="btn" onclick="inputDot()">.</button>
+            <button class="btn equals" onclick="calculate()">=</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

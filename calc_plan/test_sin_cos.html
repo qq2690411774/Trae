@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sin(cos(0)) 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .test-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .display {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            min-height: 50px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px;
+        }
+        .log {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>sin(cos(0)) 输入测试</h1>
+    
+    <div class="test-container">
+        <div class="display">
+            <div id="expression"></div>
+            <div id="result"></div>
+        </div>
+        
+        <button onclick="testSinCos0()">测试 sin(cos(0))</button>
+        <button onclick="clearDisplay()">清空</button>
+        
+        <div class="log" id="log"></div>
+    </div>
+    
+    <script src="js/engine.js"></script>
+    <script src="js/display.js"></script>
+    <script src="js/buttons.js"></script>
+    <script src="js/calculator.js"></script>
+    
+    <script>
+        let calculator;
+        let logElement = document.getElementById('log');
+        
+        function log(msg) {
+            logElement.innerHTML += msg + '<br>';
+            console.log(msg);
+        }
+        
+        function updateDisplay() {
+            document.getElementById('expression').textContent = calculator.display.currentExpression;
+            document.getElementById('result').textContent = calculator.display.currentInput;
+        }
+        
+        function testSinCos0() {
+            log('开始测试 sin(cos(0))');
+            
+            calculator.allClear();
+            updateDisplay();
+            log('1. 清空显示: 表达式=' + calculator.display.currentExpression + ', 输入=' + calculator.display.currentInput);
+            
+            calculator.inputFunction('sin');
+            updateDisplay();
+            log('2. 输入 sin: 表达式=' + calculator.display.currentExpression + ', 输入=' + calculator.display.currentInput);
+            
+            calculator.inputFunction('cos');
+            updateDisplay();
+            log('3. 输入 cos: 表达式=' + calculator.display.currentExpression + ', 输入=' + calculator.display.currentInput);
+            
+            calculator.inputDigit('0');
+            updateDisplay();
+            log('4. 输入 0: 表达式=' + calculator.display.currentExpression + ', 输入=' + calculator.display.currentInput);
+            
+            calculator.inputParenthesis(')');
+            updateDisplay();
+            log('5. 输入 ): 表达式=' + calculator.display.currentExpression + ', 输入=' + calculator.display.currentInput);
+            
+            calculator.inputParenthesis(')');
+            updateDisplay();
+            log('6. 输入 ): 表达式=' + calculator.display.currentExpression + ', 输入=' + calculator.display.currentInput);
+            
+            calculator.calculate();
+            updateDisplay();
+            log('7. 计算结果: 表达式=' + calculator.display.currentExpression + ', 输入=' + calculator.display.currentInput);
+            
+            log('测试完成');
+        }
+        
+        function clearDisplay() {
+            calculator.allClear();
+            updateDisplay();
+            logElement.innerHTML = '';
+        }
+        
+        window.onload = function() {
+            calculator = new Calculator('calculator');
+            log('计算器初始化完成');
+        };
+    </script>
+</body>
+</html>

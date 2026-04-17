@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Calculator Tests</title>
+</head>
+<body>
+    <pre id="output"></pre>
+    <script>
+        function runTests() {
+            let passed = 0;
+            let failed = 0;
+            const results = [];
+
+            function test(name, actual, expected) {
+                if (Math.abs(actual - expected) < 0.0001) {
+                    passed++;
+                    results.push(`✓ ${name}: ${actual} (预期: ${expected})`);
+                } else {
+                    failed++;
+                    results.push(`✗ ${name}: 实际=${actual}, 预期=${expected}`);
+                }
+            }
+
+            function evaluateSimpleExpression(expr) {
+                expr = expr.replace(/\s/g, '');
+                
+                let tokens = [];
+                let currentNum = '';
+                let expectNumber = true;
+                
+                for (let i = 0; i < expr.length; i++) {
+                    const char = expr[i];
+                    
+                    if (expectNumber) {
+                        if (char === '-' || (char >= '0' && char <= '9') || char === '.') {
+                            currentNum += char;
+                            expectNumber = false;
+                        }
+                    } else {
+                        if ((char >= '0' && char <= '9') || char === '.') {
+                            currentNum += char;
+                        } else if (char === '+' || char === '-' || char === '*' || char === '/' || char === '%') {
+                            if (currentNum !== '') {
+                                tokens.push({ type: 'number', value: parseFloat(currentNum) });
+                                currentNum = '';
+                            }
+                            tokens.push({ type: 'operator', value: char });
+                            expectNumber = true;
+                        }
+                    }
+                }
+                
+                if (currentNum !== '') {
+                    tokens.push({ type: 'number', value: parseFloat(currentNum) });
+                }
+                
+                if (tokens.length === 0) return 0;
+                if (tokens.length === 1 && tokens[0].type === 'number') return tokens[0].value;
+                
+                let numbers = [];
+                let operators = [];
+                
+                for (let token of tokens) {
+                    if (token.type === 'number') {
+                        numbers.push(token.value);
+                    } else {
+                        operators.push(token.value);
+                    }
+                }
+                
+                for (let i = 0; i < operators.length; i++) {
+                    if (operators[i] === '*' || operators[i] === '/') {
+                        let a = numbers[i];
+                        let b = numbers[i + 1];
+                        let result;
+                        if (operators[i] === '*') {
+                            result = a * b;
+                        } else {
+                            if (b === 0) return NaN;
+                            result = a / b;
+                        }
+                        numbers[i] = result;
+                        numbers.splice(i + 1, 1);
+                        operators.splice(i, 1);
+                        i--;
+                    }
+                }
+                
+                let finalResult = numbers[0];
+                for (let i = 0; i < operators.length; i++) {
+                    switch (operators[i]) {
+                        case '+': finalResult += numbers[i + 1]; break;
+                        case '-': finalResult -= numbers[i + 1]; break;
+                        case '%': finalResult %= numbers[i + 1]; break;
+                    }
+                }
+                
+                return finalResult;
+            }
+
+            function evaluateExpression(expr) {
+                let expression = expr.replace(/\s/g, '');
+
+                while (expression.includes('(')) {
+                    const openIndex = expression.lastIndexOf('(');
+                    const closeIndex = expression.indexOf(')', openIndex);
+                    if (closeIndex === -1) break;
+
+                    const innerExpr = expression.substring(openIndex + 1, closeIndex);
+                    const innerResult = evaluateSimpleExpression(innerExpr);
+                    expression = expression.substring(0, openIndex) + innerResult + expression.substring(closeIndex + 1);
+                }
+
+                return evaluateSimpleExpression(expression);
+            }
+
+            function applyOperation(a, b, op) {
+                switch (op) {
+                    case '+': return a + b;
+                    case '-': return a - b;
+                    case '*': return a * b;
+                    case '/': return b !== 0 ? a / b : NaN;
+                    case '%': return a % b;
+                    default: return b;
+                }
+            }
+
+            results.push('=== 基础运算测试 ===');
+            test('简单加法: 2+5', evaluateSimpleExpression('2+5'), 7);
+            test('简单减法: 10-3', evaluateSimpleExpression('10-3'), 7);
+            test('简单乘法: 3*4', evaluateSimpleExpression('3*4'), 12);
+            test('简单除法: 10/2', evaluateSimpleExpression('10/2'), 5);
+            test('多个运算: 2+3*4', evaluateSimpleExpression('2+3*4'), 14);
+            test('浮点数: 1.5+2.5', evaluateSimpleExpression('1.5+2.5'), 4);
+            test('负数: -5+3', evaluateSimpleExpression('-5+3'), -2);
+
+            results.push('\n=== 括号表达式测试 ===');
+            test('括号: (2+5)', evaluateExpression('(2+5)'), 7);
+            test('括号: (3+5)+(6+2)', evaluateExpression('(3+5)+(6+2)'), 16);
+            test('括号: (6+2*3)', evaluateExpression('(6+2*3)'), 12);
+            test('嵌套括号: ((2+3))', evaluateExpression('((2+3))'), 5);
+            test('复杂嵌套: (3+5)+(6+2*3)', evaluateExpression('(3+5)+(6+2*3)'), 20);
+            test('括号乘法: (2+3)*4', evaluateExpression('(2+3)*4'), 20);
+            test('括号除法: 20/(2+3)', evaluateExpression('20/(2+3)'), 4);
+
+            results.push('\n=== 测试结果 ===');
+            results.push(`通过: ${passed}, 失败: ${failed}`);
+
+            return results.join('\n');
+        }
+
+        document.getElementById('output').textContent = runTests();
+    </script>
+</body>
+</html>

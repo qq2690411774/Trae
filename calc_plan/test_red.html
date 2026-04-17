@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>红色数码管测试</title>
+    <style>
+        body { background: #1a1a2e; padding: 50px; }
+        .display {
+            background: #1a0a0a;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: right;
+        }
+        .result {
+            color: #ff0000;
+            font-size: 48px;
+            font-family: 'Courier New', monospace;
+            text-shadow:
+                0 0 2px #ff0000,
+                0 0 4px #ff0000,
+                0 0 8px #ff0000,
+                0 0 16px rgba(255,0,0,1),
+                0 0 32px rgba(255,0,0,0.9);
+        }
+    </style>
+</head>
+<body>
+    <div class="display">
+        <div class="result">1234567890</div>
+    </div>
+    <p style="color: #888; margin-top: 20px;">如果看到红色发光数字，说明样式正常</p>
+</body>
+</html>

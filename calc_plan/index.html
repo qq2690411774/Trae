@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>得力 JD82MS 科学计算器</title>
+    <link rel="stylesheet" href="css/style.css?v=99">
+    <!-- 七段数码管字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* 原始显示屏样式 */
+        html body .calculator .display-container {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border: 2px solid #34495e;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        html body .calculator .display {
+            background: rgba(255, 255, 255, 0.95);
+        }
+        html body .calculator .expression-line {
+            color: #666;
+            text-shadow: none;
+        }
+        html body .calculator .result-line {
+            color: #333;
+            font-size: 28px;
+            font-weight: 600;
+            text-shadow: none;
+            display: block !important;
+            text-align: right !important;
+            height: auto !important;
+            gap: 0 !important;
+            letter-spacing: 1px !important;
+        }
+        html body .calculator .mode-indicator {
+            color: #666;
+            text-shadow: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator" id="calculator">
+        <!-- 顶部品牌标识 -->
+        <div class="calculator-header">
+            <span class="brand">deli得力</span>
+            <span class="model">JD82MS</span>
+        </div>
+
+        <!-- 原始显示屏 -->
+        <div class="display-container">
+            <div class="display" id="display">
+                <div class="expression-line" id="expression"></div>
+                <div class="result-line" id="result">0</div>
+            </div>
+            <div class="mode-indicator" id="modeIndicator"></div>
+        </div>
+
+        <!-- 按键区域 -->
+        <div class="keypad">
+            <!-- 第1排: SHIFT ALPHA [REPLAY] MODE CLR ON -->
+            <div class="row row-top">
+                <button class="btn btn-shift" data-action="shift" data-label="SHIFT">SHIFT</button>
+                <button class="btn btn-alpha" data-action="alpha" data-label="ALPHA">ALPHA</button>
+                <button class="btn btn-replay" data-action="replay" data-label="REPLAY">REPLAY</button>
+                <button class="btn btn-mode" data-action="mode" data-label="MODE">MODE</button>
+                <button class="btn btn-function" data-action="clr" data-label="CLR">CLR</button>
+                <button class="btn btn-on" data-action="on" data-label="ON">ON</button>
+            </div>
+
+            <!-- 第2排: x! nPr nCr Rec( x³ -->
+            <div class="row">
+                <button class="btn btn-scientific" data-action="factorial" data-label="x!">x!</button>
+                <button class="btn btn-scientific" data-action="npr" data-label="nPr">nPr</button>
+                <button class="btn btn-scientific" data-action="ncr" data-label="nCr">nCr</button>
+                <button class="btn btn-scientific" data-action="pol" data-label="pol(">pol(</button>
+                <button class="btn btn-scientific" data-action="cube" data-label="x³">x³</button>
+            </div>
+
+            <!-- 第3排: d/c √ x² ^ 10^x e^x -->
+            <div class="row">
+                <button class="btn btn-scientific" data-action="fraction" data-label="d/c">d/c</button>
+                <button class="btn btn-scientific" data-action="sqrt" data-label="√">√</button>
+                <button class="btn btn-scientific" data-action="square" data-label="x²">x²</button>
+                <button class="btn btn-scientific" data-action="power" data-label="^">^</button>
+                <button class="btn btn-scientific" data-action="tenpow" data-label="10^x">10ˣ</button>
+                <button class="btn btn-scientific" data-action="exp" data-label="e^x">eˣ</button>
+            </div>
+
+            <!-- 第4排: log ln ab/c ( ) sin⁻¹ cos⁻¹ tan⁻¹ -->
+            <div class="row">
+                <button class="btn btn-scientific" data-action="log" data-label="log">log</button>
+                <button class="btn btn-scientific" data-action="ln" data-label="ln">ln</button>
+                <button class="btn btn-scientific" data-action="ab-c" data-label="ab/c">ab/c</button>
+                <button class="btn btn-scientific" data-action="open-paren" data-label="(">(</button>
+                <button class="btn btn-scientific" data-action="close-paren" data-label=")">)</button>
+                <button class="btn btn-scientific shift-func" data-action="asin" data-label="sin⁻¹">sin⁻¹</button>
+                <button class="btn btn-scientific shift-func" data-action="acos" data-label="cos⁻¹">cos⁻¹</button>
+                <button class="btn btn-scientific shift-func" data-action="atan" data-label="tan⁻¹">tan⁻¹</button>
+            </div>
+
+            <!-- 第5排: ( °'" hyp sin cos tan -->
+            <div class="row">
+                <button class="btn btn-scientific" data-action="open-paren2" data-label="( ">(</button>
+                <button class="btn btn-scientific" data-action="dms" data-label='°'"'>°'"</button>
+                <button class="btn btn-scientific" data-action="hyp" data-label="hyp">hyp</button>
+                <button class="btn btn-scientific" data-action="sin" data-label="sin">sin</button>
+                <button class="btn btn-scientific" data-action="cos" data-label="cos">cos</button>
+                <button class="btn btn-scientific" data-action="tan" data-label="tan">tan</button>
+            </div>
+
+            <!-- 第6排: STO RCL ENG ( ) , M+ -->
+            <div class="row">
+                <button class="btn btn-scientific" data-action="sto" data-label="STO">STO</button>
+                <button class="btn btn-scientific" data-action="rcl" data-label="RCL">RCL</button>
+                <button class="btn btn-scientific" data-action="eng" data-label="ENG">ENG</button>
+                <button class="btn btn-scientific" data-action="open-paren3" data-label="( ">(</button>
+                <button class="btn btn-scientific" data-action="close-paren2" data-label=", ">,</button>
+                <button class="btn btn-scientific" data-action="mplus" data-label="M+">M+</button>
+            </div>
+
+            <!-- 第7排: INS DT/CL OFF DEL AC -->
+            <div class="row">
+                <button class="btn btn-scientific" data-action="ins" data-label="INS">INS</button>
+                <button class="btn btn-scientific" data-action="dt-cl" data-label="DT/CL">DT/CL</button>
+                <button class="btn btn-scientific" data-action="off" data-label="OFF">OFF</button>
+                <button class="btn btn-del" data-action="del" data-label="DEL">DEL</button>
+                <button class="btn btn-ac" data-action="ac" data-label="AC">AC</button>
+            </div>
+
+            <!-- 数字键盘区 -->
+            <!-- 第8排: 7 8 9 -->
+            <div class="row row-numbers">
+                <button class="btn btn-number" data-action="number" data-value="7">7</button>
+                <button class="btn btn-number" data-action="number" data-value="8">8</button>
+                <button class="btn btn-number" data-action="number" data-value="9">9</button>
+            </div>
+
+            <!-- 第9排: 4 5 6 × ÷ -->
+            <div class="row row-numbers">
+                <button class="btn btn-number" data-action="number" data-value="4">4</button>
+                <button class="btn btn-number" data-action="number" data-value="5">5</button>
+                <button class="btn btn-number" data-action="number" data-value="6">6</button>
+                <button class="btn btn-operator" data-action="operator" data-value="*">×</button>
+                <button class="btn btn-operator" data-action="operator" data-value="/">÷</button>
+            </div>
+
+            <!-- 第10排: 1 2 3 + - -->
+            <div class="row row-numbers">
+                <button class="btn btn-number" data-action="number" data-value="1">1</button>
+                <button class="btn btn-number" data-action="number" data-value="2">2</button>
+                <button class="btn btn-number" data-action="number" data-value="3">3</button>
+                <button class="btn btn-operator" data-action="operator" data-value="+">+</button>
+                <button class="btn btn-operator" data-action="operator" data-value="-">−</button>
+            </div>
+
+            <!-- 第11排: Ran# Rand π DRG▸ % -->
+            <div class="row row-bottom-left">
+                <button class="btn btn-scientific small" data-action="rand-hash" data-label="Ran#">Ran#</button>
+                <button class="btn btn-scientific small" data-action="rand" data-label="Rand">Rand</button>
+                <button class="btn btn-scientific small" data-action="pi" data-label="π">π</button>
+                <button class="btn btn-scientific small" data-action="drg" data-label="DRG▸">DRG▸</button>
+                <button class="btn btn-scientific small" data-action="percent" data-label="%">%</button>
+            </div>
+
+            <!-- 第12排: 0 . EXP Ans = -->
+            <div class="row row-bottom-right">
+                <button class="btn btn-number" data-action="number" data-value="0">0</button>
+                <button class="btn btn-number" data-action="decimal" data-value=".">.</button>
+                <button class="btn btn-scientific" data-action="exp-btn" data-label="EXP">EXP</button>
+                <button class="btn btn-scientific" data-action="ans" data-label="Ans">Ans</button>
+                <button class="btn btn-equals" data-action="equals" data-value="=">=</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 模块 -->
+    <script src="js/engine.js"></script>
+    <script src="js/display.js"></script>
+    <script src="js/buttons.js"></script>
+    <script src="js/calculator.js"></script>
+</body>
+</html>

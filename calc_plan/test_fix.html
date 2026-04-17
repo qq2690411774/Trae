@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修复测试</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        .test-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #4ecca3;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .display {
+            background: #2c3e50;
+            border: 2px solid #34495e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 80px;
+        }
+        .expression-line {
+            color: #95a5a6;
+            font-size: 14px;
+            text-align: right;
+            margin-bottom: 10px;
+        }
+        .result-line {
+            color: #ecf0f1;
+            font-size: 28px;
+            font-weight: 600;
+            text-align: right;
+        }
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: linear-gradient(135deg, #3d3d3d 0%, #2a2a2a 100%);
+            color: #fff;
+            border: none;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(78, 204, 163, 0.3);
+        }
+        .status {
+            text-align: center;
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .status.success {
+            background: rgba(107, 203, 119, 0.2);
+            color: #6bcb77;
+        }
+        .status.error {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>修复测试</h1>
+        
+        <div class="display">
+            <div class="expression-line" id="expression"></div>
+            <div class="result-line" id="result">0</div>
+        </div>
+        
+        <div class="test-buttons">
+            <button onclick="testCase1()">测试 3.2*2.3</button>
+            <button onclick="testCase2()">测试 3.2*23</button>
+            <button onclick="testCase3()">测试 2.5+3.7</button>
+            <button onclick="testCase4()">测试 10/2.5</button>
+            <button onclick="testCase5()">测试 sin(30)</button>
+            <button onclick="clearDisplay()">清空</button>
+        </div>
+        
+        <div class="status" id="status">请点击按钮测试</div>
+    </div>
+    
+    <script src="js/engine.js"></script>
+    <script src="js/display.js"></script>
+    <script src="js/buttons.js"></script>
+    <script src="js/calculator.js"></script>
+    
+    <script>
+        let calculator;
+        
+        window.onload = function() {
+            calculator = window.calculator;
+        };
+        
+        function testCase1() {
+            const statusEl = document.getElementById('status');
+            
+            // 模拟输入 3.2*2.3
+            calculator.allClear();
+            calculator.inputDigit('3');
+            calculator.inputDigit('.');
+            calculator.inputDigit('2');
+            calculator.inputOperator('*');
+            calculator.inputDigit('2');
+            calculator.inputDigit('.');
+            calculator.inputDigit('3');
+            calculator.calculate();
+            
+            const result = document.getElementById('result').textContent;
+            const expected = '7.36';
+            
+            if (Math.abs(parseFloat(result) - parseFloat(expected)) < 0.0001) {
+                statusEl.className = 'status success';
+                statusEl.textContent = `测试通过: 3.2*2.3 = ${result}`;
+            } else {
+                statusEl.className = 'status error';
+                statusEl.textContent = `测试失败: 3.2*2.3 = ${result} (预期: ${expected})`;
+            }
+        }
+        
+        function testCase2() {
+            const statusEl = document.getElementById('status');
+            
+            // 模拟输入 3.2*23
+            calculator.allClear();
+            calculator.inputDigit('3');
+            calculator.inputDigit('.');
+            calculator.inputDigit('2');
+            calculator.inputOperator('*');
+            calculator.inputDigit('2');
+            calculator.inputDigit('3');
+            calculator.calculate();
+            
+            const result = document.getElementById('result').textContent;
+            const expected = '73.6';
+            
+            if (Math.abs(parseFloat(result) - parseFloat(expected)) < 0.0001) {
+                statusEl.className = 'status success';
+                statusEl.textContent = `测试通过: 3.2*23 = ${result}`;
+            } else {
+                statusEl.className = 'status error';
+                statusEl.textContent = `测试失败: 3.2*23 = ${result} (预期: ${expected})`;
+            }
+        }
+        
+        function testCase3() {
+            const statusEl = document.getElementById('status');
+            
+            // 模拟输入 2.5+3.7
+            calculator.allClear();
+            calculator.inputDigit('2');
+            calculator.inputDigit('.');
+            calculator.inputDigit('5');
+            calculator.inputOperator('+');
+            calculator.inputDigit('3');
+            calculator.inputDigit('.');
+            calculator.inputDigit('7');
+            calculator.calculate();
+            
+            const result = document.getElementById('result').textContent;
+            const expected = '6.2';
+            
+            if (Math.abs(parseFloat(result) - parseFloat(expected)) < 0.0001) {
+                statusEl.className = 'status success';
+                statusEl.textContent = `测试通过: 2.5+3.7 = ${result}`;
+            } else {
+                statusEl.className = 'status error';
+                statusEl.textContent = `测试失败: 2.5+3.7 = ${result} (预期: ${expected})`;
+            }
+        }
+        
+        function testCase4() {
+            const statusEl = document.getElementById('status');
+            
+            // 模拟输入 10/2.5
+            calculator.allClear();
+            calculator.inputDigit('1');
+            calculator.inputDigit('0');
+            calculator.inputOperator('/');
+            calculator.inputDigit('2');
+            calculator.inputDigit('.');
+            calculator.inputDigit('5');
+            calculator.calculate();
+            
+            const result = document.getElementById('result').textContent;
+            const expected = '4';
+            
+            if (Math.abs(parseFloat(result) - parseFloat(expected)) < 0.0001) {
+                statusEl.className = 'status success';
+                statusEl.textContent = `测试通过: 10/2.5 = ${result}`;
+            } else {
+                statusEl.className = 'status error';
+                statusEl.textContent = `测试失败: 10/2.5 = ${result} (预期: ${expected})`;
+            }
+        }
+        
+        function testCase5() {
+            const statusEl = document.getElementById('status');
+            
+            // 测试 sin(30)
+            calculator.allClear();
+            calculator.inputFunction('sin');
+            calculator.inputDigit('3');
+            calculator.inputDigit('0');
+            calculator.inputParenthesis(')');
+            calculator.calculate();
+            
+            const result = document.getElementById('result').textContent;
+            const expected = '0.5';
+            
+            if (Math.abs(parseFloat(result) - parseFloat(expected)) < 0.0001) {
+                statusEl.className = 'status success';
+                statusEl.textContent = `测试通过: sin(30) = ${result}`;
+            } else {
+                statusEl.className = 'status error';
+                statusEl.textContent = `测试失败: sin(30) = ${result} (预期: ${expected})`;
+            }
+        }
+        
+        function clearDisplay() {
+            calculator.allClear();
+            document.getElementById('status').textContent = '请点击按钮测试';
+            document.getElementById('status').className = 'status';
+        }
+    </script>
+</body>
+</html>

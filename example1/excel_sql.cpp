@@ -17,7 +17,7 @@ void SQLCheck(SQLRETURN ret, SQLHANDLE handle, SQLSMALLINT handleType, const cha
         SQLINTEGER nativeError;
         SQLSMALLINT messageLength;
         
-        SQLGetDiagRec(handleType, handle, 1, sqlState, &nativeError, message, sizeof(message), &messageLength);
+        SQLGetDiagRecA(handleType, handle, 1, sqlState, &nativeError, message, sizeof(message), &messageLength);
         cout << "Error during " << operation << ": " << message << " (SQL State: " << sqlState << ")" << endl;
         exit(1);
     }
@@ -91,7 +91,7 @@ int wmain(int argc, wchar_t* argv[]) {
     
     cout << "Connection string: " << connectionString << endl;
     
-    ret = SQLDriverConnect(hdbc, NULL, (SQLCHAR*)connectionString, SQL_NTS, NULL, 0, NULL, SQL_DRIVER_COMPLETE);
+    ret = SQLDriverConnectA(hdbc, NULL, (SQLCHAR*)connectionString, SQL_NTS, NULL, 0, NULL, SQL_DRIVER_COMPLETE);
     SQLCheck(ret, hdbc, SQL_HANDLE_DBC, "connecting to Excel");
     
     // 5. 分配语句句柄
@@ -100,7 +100,7 @@ int wmain(int argc, wchar_t* argv[]) {
     
     // 6. 执行SQL语句
     cout << "Executing SQL statement: " << sqlStatementA << endl;
-    ret = SQLExecDirect(hstmt, (SQLCHAR*)sqlStatementA.c_str(), SQL_NTS);
+    ret = SQLExecDirectA(hstmt, (SQLCHAR*)sqlStatementA.c_str(), SQL_NTS);
     SQLCheck(ret, hstmt, SQL_HANDLE_STMT, "executing SQL statement");
     
     // 7. 处理查询结果（如果是SELECT语句）

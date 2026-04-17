@@ -1,0 +1,104 @@
+页数: 3
+
+=== 文档内容 ===
+
+--- 第 1 页 ---
+
+alfred_ Application Challenge
+Design + Prototype alfred_'s Execution Decision Layer
+At alfred_, we are building an AI assistant that lives in your text messages. Users ask alfred_ to manage
+email, calendar, reminders, and scheduling, and increasingly, alfred_ acts on their behalf.
+One of the hardest product problems is deciding when alfred_ should act silently, when it should confirm,
+when it should ask a clarifying question, and when it should refuse. As the product becomes more
+powerful, this decision layer becomes core to the user experience.
+Your Task (Timebox: <= 6 hours)
+We do not want you to overbuild. Focus on judgment, clarity, scope, and execution.
+1. Design the Execution Decision Layer
+Given a proposed action plus context, your system should decide one of the following:
+l Execute silently
+l Execute and tell the user after
+l Confirm before executing
+l Ask a clarifying question
+l Refuse / escalate
+Important framing: this is a contextual conversation decision problem, not a one shot prompt classification
+task. Your system should consider conversation history and user state, not just the latest message in
+isolation.
+Use this boundary so decisions are comparable:
+(cid:127) Ask a clarifying question when intent, entity, or key parameters are unresolved.
+(cid:127) Confirm before executing when intent is resolved but risk is above your silent execution threshold.
+(cid:127) Refuse / escalate when policy disallows the action, or risk or uncertainty remains too high after
+clarification.
+2. Build a Simple Prototype
+Create a minimal working prototype that lets us:
+(cid:127) submit an action plus some context
+(cid:127) see the final decision plus a concise rationale
+(cid:127) view a handful of preloaded example scenarios
+(cid:127) look under the hood on any decision
+We want to see the full pipeline, not just the verdict. Please expose:
+
+--- 第 2 页 ---
+
+(cid:127) the inputs
+(cid:127) any signals or rules you computed in code
+(cid:127) the exact prompt sent to the model
+(cid:127) the raw model output
+(cid:127) the final parsed decision
+A simple UI is completely fine. We care much more about the quality of the thinking than visual polish.
+3. Handle Failure Cases
+Document and demonstrate what your system does for at least:
+(cid:127) LLM timeout
+(cid:127) malformed model output
+(cid:127) missing critical context
+Make at least one of these failure paths visible in the UI.
+Default safe behavior should avoid irreversible execution when uncertain.
+4. Include Scenario Coverage
+Please include at least 6 preloaded scenarios:
+(cid:127) 2 clear / easy cases
+(cid:127) 2 ambiguous cases requiring judgment
+(cid:127) 2 adversarial or risky cases
+Illustrative example:
+(cid:127) Action: send email reply to external partner
+(cid:127) Latest user message: "Yep, send it"
+(cid:127) Conversation history: user earlier asked alfred_ to draft a reply to Acme proposing a 20% discount;
+alfred_ drafted the email and asked for confirmation; user then said, "Actually hold off until legal
+reviews pricing language"; a few minutes later user said, "Yep, send it."
+A strong system should not treat the latest message in isolation.
+5. Deploy It
+Please deploy the prototype and send back:
+(cid:127) a live URL
+(cid:127) a GitHub repo link
+6. Write a Short README
+In your repo README, please include a short writeup covering:
+
+--- 第 3 页 ---
+
+(cid:127) what signals your system uses, and why
+(cid:127) how you split responsibility between the LLM and regular code
+(cid:127) what the model decides versus what you compute deterministically
+(cid:127) your prompt design in brief
+(cid:127) expected failure modes
+(cid:127) how you would evolve this system as alfred_ gains riskier tools
+(cid:127) what you would build next if you owned this for the next 6 months
+What We’re Looking For
+(cid:127) Product judgment
+(cid:127) Strong scoping instincts
+(cid:127) Clear system design
+(cid:127) Good taste around trust and UX
+(cid:127) Comfort operating under ambiguity
+(cid:127) Clean, working code
+(cid:127) Clear communication of tradeoffs
+A Note on Scope
+Parts of this challenge are intentionally underspecified. We want to see how you make design decisions,
+where you simplify, and what you prioritize.
+Use AI tools freely. Make judgment calls. Be honest about what you chose not to build.
+Final Step
+Please send your completed submission by 4/19 at 11:59 PM EST.
+Reply to this email thread with:
+(cid:127) the deployed link
+(cid:127) the GitHub repo
+(cid:127) your writeup, if included in the README that is completely fine
+If we do not hear back by then, we will assume you have decided not to continue in the process.
+If anything about the prompt is unclear, feel free to email us.
+Thanks again - we are excited to see what you build.
+The alfred_ team
+

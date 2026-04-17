@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>计算器快速验证</title>
+    <style>
+        body { font-family: monospace; background: #1a1a2e; color: #4ecca3; padding: 20px; }
+        .pass { color: #6bcb77; }
+        .fail { color: #ff6b6b; }
+        pre { background: #0d1117; padding: 15px; border-radius: 8px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h2>🔬 计算器引擎核心验证测试</h2>
+    <pre id="output">正在加载...</pre>
+
+    <script src="js/engine.js"></script>
+    <script>
+        const output = document.getElementById('output');
+        let results = [];
+        let passed = 0;
+        let failed = 0;
+
+        function test(id, expr, expected, tolerance = 0) {
+            try {
+                const result = engine.evaluate(expr);
+                const numResult = parseFloat(result);
+                const numExpected = parseFloat(expected);
+
+                if (expected === 'Error') {
+                    passed++;
+                    results.push(`✅ ${id}: ${expr} → Error (正确)`);
+                    return;
+                }
+
+                const diff = Math.abs(numResult - numExpected);
+                const ok = diff <= tolerance || result === expected;
+
+                if (ok) {
+                    passed++;
+                    results.push(`✅ ${id}: ${expr} = ${result} (预期: ${expected})`);
+                } else {
+                    failed++;
+                    results.push(`❌ ${id}: ${expr} = ${result} (预期: ${expected}, 差异: ${diff})`);
+                }
+            } catch(e) {
+                if (expected === 'Error') {
+                    passed++;
+                    results.push(`✅ ${id}: ${expr} → Error: ${e.message}`);
+                } else {
+                    failed++;
+                    results.push(`❌ ${id}: ${expr} → Error: ${e.message} (预期: ${expected})`);
+                }
+            }
+        }
+
+        output.textContent = '开始测试...\n\n';
+
+        const engine = new CalculatorEngine();
+
+        // 基础运算
+        test('B1', '2+3', '5');
+        test('B2', '10-4', '6');
+        test('B3', '7*8', '56');
+        test('B4', '100/4', '25');
+        test('B5', '1+2+3+4+5', '15');
+        test('B6', '100-50-25', '25');
+        test('B7', '0.1+0.2', '0.3', 0.0001);
+        test('B8', '-5+3', '-2');
+
+        output.textContent += `基础运算: ${passed-0}/${passed+failed}\n`;
+
+        // 优先级
+        test('P1', '2+3*4', '14');
+        test('P2', '(2+3)*4', '20');
+        test('P3', '10/(2+3)', '2');
+        test('P4', '2*3+4*5', '26');
+        test('P5', '2^3*3', '24');
+        test('P6', '((2+3)*4)-5', '15');
+
+        output.textContent += `\n优先级测试完成...\n`;
+
+        // 科学函数
+        test('S1', 'sin(30)', '0.5', 0.001);
+        test('S2', 'cos(60)', '0.5', 0.001);
+        test('S3', 'sqrt(9)+4', '7');
+        test('S4', 'log(100)*3', '6');
+        test('S5', 'ln(exp(3))', '3', 0.001);
+        test('S6', '2^10', '1024');
+
+        output.textContent += `\n科学函数测试完成...\n`;
+
+        // 边界情况
+        test('E1', '10/0', 'Error');
+        test('E2', 'sqrt(-1)', 'Error');
+        test('E3', '(-1)!', 'Error');
+        test('E4', '120/1/2/3/4/5', '1');
+
+        output.textContent += `\n边界情况测试完成...\n\n`;
+
+        const total = passed + failed;
+        const rate = ((passed / total) * 100).toFixed(1);
+
+        results.push('\n' + '='.repeat(50));
+        results.push(`总计: ${total} | 通过: ${passed} | 失败: ${failed}`);
+        results.push(`通过率: ${rate}%`);
+        results.push('=' .repeat(50));
+
+        if (rate === '100.0') {
+            results.push('\n🎉 完美！所有核心功能正常！');
+        } else {
+            results.push(`\n⚠️ 通过率: ${rate}%，需要修复`);
+        }
+
+        output.textContent = results.join('\n');
+    </script>
+</body>
+</html>

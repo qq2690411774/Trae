@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试数字256显示</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        .test-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            color: #4ecca3;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .display {
+            background: #1a0a0a;
+            border: 3px solid #4a3a3a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            min-height: 100px;
+        }
+        .result-line {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            height: 60px;
+            gap: 4px;
+        }
+        .digit {
+            position: relative;
+            width: 28px;
+            height: 48px;
+        }
+        .segment {
+            position: absolute;
+            background: #2a0a0a;
+            transition: background 0.1s, box-shadow 0.1s;
+        }
+        .segment-a {
+            top: 0;
+            left: 5px;
+            width: 18px;
+            height: 4px;
+        }
+        .segment-b {
+            top: 6px;
+            right: 0;
+            width: 4px;
+            height: 18px;
+        }
+        .segment-c {
+            top: 24px;
+            right: 0;
+            width: 4px;
+            height: 18px;
+        }
+        .segment-d {
+            bottom: 0;
+            right: 5px;
+            width: 18px;
+            height: 4px;
+        }
+        .segment-e {
+            bottom: 6px;
+            left: 0;
+            width: 4px;
+            height: 18px;
+        }
+        .segment-f {
+            top: 6px;
+            left: 0;
+            width: 4px;
+            height: 18px;
+        }
+        .segment-g {
+            top: 22px;
+            left: 5px;
+            width: 18px;
+            height: 4px;
+        }
+        .segment-dp {
+            bottom: 0;
+            right: -4px;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+        .segment.on {
+            background: #ff0000;
+            box-shadow: 0 0 6px #ff0000, 0 0 12px #ff0000, 0 0 18px #ff0000;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: linear-gradient(135deg, #3d3d3d 0%, #2a2a2a 100%);
+            color: #fff;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+        }
+        .status {
+            text-align: center;
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .status.success {
+            background: rgba(107, 203, 119, 0.2);
+            color: #6bcb77;
+        }
+        .status.error {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>测试数字256显示</h1>
+        
+        <div class="display">
+            <div class="result-line" id="result"></div>
+        </div>
+        
+        <div class="buttons">
+            <button onclick="appendDigit('2')">2</button>
+            <button onclick="appendDigit('5')">5</button>
+            <button onclick="appendDigit('6')">6</button>
+            <button onclick="clearDisplay()" style="grid-column: 1 / -1;">清空</button>
+        </div>
+        
+        <div class="status" id="status">请点击按钮测试数字显示</div>
+    </div>
+    
+    <script>
+        // 8段数码管段定义
+        const DIGIT_SEGMENTS = {
+            '0': ['a', 'b', 'c', 'd', 'e', 'f'],
+            '1': ['b', 'c'],
+            '2': ['a', 'b', 'd', 'e', 'g'],
+            '3': ['a', 'b', 'c', 'd', 'g'],
+            '4': ['b', 'c', 'f', 'g'],
+            '5': ['a', 'c', 'd', 'e', 'f', 'g'],
+            '6': ['a', 'c', 'd', 'e', 'f', 'g'],
+            '7': ['a', 'b', 'c'],
+            '8': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+            '9': ['a', 'b', 'c', 'd', 'f', 'g'],
+            '-': ['g'],
+            'E': ['a', 'c', 'd', 'e', 'g'],
+            'r': ['e', 'g'],
+            'o': ['c', 'd', 'e', 'g'],
+            '.': ['dp'],
+            ' ': []
+        };
+        
+        let currentInput = '';
+        
+        function createDigitHTML(char) {
+            const segments = DIGIT_SEGMENTS[char] || [];
+            let html = '<div class="digit">';
+            
+            const segmentPositions = {
+                'a': 'segment-a',
+                'b': 'segment-b', 
+                'c': 'segment-c',
+                'd': 'segment-d',
+                'e': 'segment-e',
+                'f': 'segment-f',
+                'g': 'segment-g',
+                'dp': 'segment-dp'
+            };
+            
+            for (const seg of segments) {
+                const className = segmentPositions[seg];
+                if (className) {
+                    html += `<div class="segment ${className} on"></div>`;
+                }
+            }
+            html += '</div>';
+            return html;
+        }
+        
+        function updateDisplay() {
+            const resultEl = document.getElementById('result');
+            const statusEl = document.getElementById('status');
+            
+            if (currentInput) {
+                let html = '';
+                for (let i = 0; i < currentInput.length; i++) {
+                    html += createDigitHTML(currentInput[i]);
+                }
+                resultEl.innerHTML = html;
+                statusEl.className = 'status success';
+                statusEl.textContent = `当前输入: ${currentInput}`;
+            } else {
+                resultEl.innerHTML = '';
+                statusEl.className = 'status';
+                statusEl.textContent = '请点击按钮测试数字显示';
+            }
+        }
+        
+        function appendDigit(digit) {
+            currentInput += digit;
+            updateDisplay();
+        }
+        
+        function clearDisplay() {
+            currentInput = '';
+            updateDisplay();
+        }
+    </script>
+</body>
+</html>

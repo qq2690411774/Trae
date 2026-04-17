@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计算器最终验证 - 内联版本</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #0d1117; color: #58a6ff; padding: 20px; line-height: 1.6; }
+        .pass { color: #3fb950; font-weight: bold; }
+        .fail { color: #f85149; font-weight: bold; }
+        .info { color: #8b949e; }
+        h2 { color: #ffffff; border-bottom: 2px solid #30363d; padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h2>🔬 科学计算器 - 最终验证测试 (v3.0 内联版)</h2>
+    <pre id="output" style="background:#161b22;padding:20px;border-radius:8px;font-size:14px;"></pre>
+
+    <script>
+// ========== 内联计算器引擎 (完整复制) ==========
+class CalculatorEngine {
+    constructor() {
+        this.angleMode = 'DEG';
+        this.memory = {};
+        this.lastAnswer = 0;
+        this.variables = { A: 0, B: 0, C: 0, E: 0, F: 0, X: 0, Y: 0, M: 0 };
+        this.precision = 12;
+    }
+
+    evaluate(expression) {
+        try {
+            const tokens = this.tokenize(expression);
+            if (tokens.length === 0) return '0';
+
+            let pos = 0;
+            const result = this.parseExpression(tokens, pos);
+
+            if (result.pos < tokens.length) {
+                throw new Error('Invalid expression');
+            }
+
+            return this.formatResult(result.value);
+        } catch (error) {
+            throw new Error(error.message || 'Error');
+        }
+    }
+
+    tokenize(expr) {
+        const tokens = [];
+        let i = 0;
+        while (i < expr.length) {
+            const char = expr[i];
+            if (/\s/.test(char)) { i++; continue; }
+            if (/[0-9]/.test(char)) {
+                let num = '';
+                while (i < expr.length && /[0-9.]/.test(expr[i])) num += expr[i++];
+                tokens.push({ type: 'NUMBER', value: parseFloat(num) });
+                continue;
+            }
+            if (/[a-zA-Zπ]/.test(char)) {
+                let word = '';
+                while (i < expr.length && /[a-zA-Zπ]/.test(expr[i])) word += expr[i++];
+
+                const funcMap = {
+                    'sin': 'SIN', 'cos': 'COS', 'tan': 'TAN',
+                    'asin': 'ASIN', 'acos': 'ACOS', 'atan': 'ATAN',
+                    'sinh': 'SINH', 'cosh': 'COSH', 'tanh': 'TANH',
+                    'log': 'LOG', 'ln': 'LN', 'sqrt': 'SQRT',
+                    'abs': 'ABS', 'exp': 'EXP_FUNC',
+                    'pi': 'PI', 'π': 'PI', 'Ans': 'ANS'
+                };
+
+                if (funcMap[word]) tokens.push({ type: funcMap[word], value: word });
+                else if (word.length === 1 && /[A-FXYM]/.test(word)) tokens.push({ type: 'VARIABLE', value: word });
+                else throw new Error(`Unknown function: ${word}`);
+                continue;
+            }
+
+            const opMap = { '+':'PLUS', '-':'MINUS', '*':'MUL', '/':'DIV', '^':'POWER', '(':'LPAREN', ')':'RPAREN', ',':'COMMA', '!':'FACTORIAL' };
+            if (opMap[char]) { tokens.push({ type: opMap[char], value: char }); i++; continue; }
+            throw new Error(`Invalid character: ${char}`);
+        }
+        return tokens;
+    }
+
+    parseExpression(tokens, pos) {
+        let left = this.parseTerm(tokens, pos);
+        while (left.pos < tokens.length && (tokens[left.pos].type === 'PLUS' || tokens[left.pos].type === 'MINUS')) {
+            const op = tokens[left.pos]; left.pos++;
+            const right = this.parseTerm(tokens, left.pos);
+            left.value = op.type === 'PLUS' ? left.value + right.value : left.value - right.value;
+            left.pos = right.pos;
+        }
+        return left;
+    }
+
+    parseTerm(tokens, pos) {
+        let left = this.parsePower(tokens, pos);
+        while (left.pos < tokens.length && (tokens[left.pos].type === 'MUL' || tokens[left.pos].type === 'DIV')) {
+            const op = tokens[left.pos]; left.pos++;
+            const right = this.parsePower(tokens, left.pos);
+            if (op.type === 'MUL') left.value = left.value * right.value;
+            else { if (right.value === 0) throw new Error('Division by zero'); left.value = left.value / right.value; }
+            left.pos = right.pos;
+        }
+        return left;
+    }
+
+    parsePower(tokens, pos) {
+        let base = this.parseUnary(tokens, pos);
+        if (base.pos < tokens.length && tokens[base.pos].type === 'POWER') {
+            base.pos++;
+            const exp = this.parsePower(tokens, base.pos);
+            base.value = Math.pow(base.value, exp.value);
+            base.pos = exp.pos;
+        }
+        return base;
+    }
+
+    parseUnary(tokens, pos) {
+        if (pos < tokens.length && tokens[pos].type === 'MINUS') {
+            pos++;
+            const operand = this.parseFactorial(tokens, pos);
+            return { value: -operand.value, pos: operand.pos };
+        }
+        if (pos < tokens.length && tokens[pos].type === 'PLUS') {
+            pos++;
+            return this.parseFactorial(tokens, pos);
+        }
+        return this.parseFactorial(tokens, pos);
+    }
+
+    parseFactorial(tokens, pos) {
+        let result = this.parsePrimary(tokens, pos);
+        while (result.pos < tokens.length && tokens[result.pos].type === 'FACTORIAL') {
+            result.pos++;
+            let n = Math.round(result.value);
+            if (n < 0) throw new Error('Domain error');
+            if (n > 170) throw new Error('Overflow');
+            let f = 1;
+            for (let i = 2; i <= n; i++) f *= i;
+            result.value = f;
+        }
+        return result;
+    }
+
+    parsePrimary(tokens, pos) {
+        if (pos >= tokens.length) throw new Error('Unexpected end');
+        const token = tokens[pos];
+
+        if (token.type === 'NUMBER') return { value: token.value, pos: pos + 1 };
+
+        if (token.type === 'LPAREN') {
+            pos++;
+            const result = this.parseExpression(tokens, pos);
+            if (result.pos >= tokens.length || tokens[result.pos].type !== 'RPAREN') throw new Error('Missing )');
+            result.pos++;
+            return result;
+        }
+
+        if (['SIN','COS','TAN','ASIN','ACOS','ATAN','SINH','COSH','TANH','LOG','LN','SQRT','ABS','EXP_FUNC'].includes(token.type)) {
+            pos++;
+            if (pos >= tokens.length || tokens[pos].type !== 'LPAREN') throw new Error(`Missing ( after ${token.value}`);
+            pos++;
+
+            const argResult = this.parseExpression(tokens, pos);
+            const args = [argResult.value];  // 关键修复：只取value
+            pos = argResult.pos;
+
+            while (pos < tokens.length && tokens[pos].type === 'COMMA') {
+                pos++;
+                const a = this.parseExpression(tokens, pos);
+                args.push(a.value);
+                pos = a.pos;
+            }
+
+            if (pos >= tokens.length || tokens[pos].type !== 'RPAREN') throw new Error('Missing )');
+            pos++;
+
+            const val = args[0];
+            let result;
+
+            switch(token.type) {
+                case 'SIN': result = Math.sin(val * Math.PI / 180); break;
+                case 'COS': result = Math.cos(val * Math.PI / 180); break;
+                case 'TAN':
+                    const r = val * Math.PI / 180;
+                    if (Math.abs(r % (Math.PI/2)) < 0.000001 && Math.abs(r % Math.PI) > 0.000001) throw new Error('Math error');
+                    result = Math.tan(r); break;
+                case 'ASIN': if (val < -1 || val > 1) throw new Error('Domain error'); result = Math.asin(val) * 180 / Math.PI; break;
+                case 'ACOS': if (val < -1 || val > 1) throw new Error('Domain error'); result = Math.acos(val) * 180 / Math.PI; break;
+                case 'ATAN': result = Math.atan(val) * 180 / Math.PI; break;
+                case 'SINH': result = (Math.exp(val) - Math.exp(-val)) / 2; break;
+                case 'COSH': result = (Math.exp(val) + Math.exp(-val)) / 2; break;
+                case 'TANH': { const e = Math.exp(2*val); result = (e-1)/(e+1); } break;
+                case 'LOG': if (val <= 0) throw new Error('Domain error'); result = Math.log10(val); break;
+                case 'LN': if (val <= 0) throw new Error('Domain error'); result = Math.log(val); break;
+                case 'SQRT': if (val < 0) throw new Error('Domain error'); result = Math.sqrt(val); break;
+                case 'ABS': result = Math.abs(val); break;
+                case 'EXP_FUNC': result = Math.exp(val); break;
+                default: throw new Error(`Unknown: ${token.type}`);
+            }
+            return { value: result, pos };
+        }
+
+        if (token.type === 'PI') return { value: Math.PI, pos: pos + 1 };
+        if (token.type === 'ANS') return { value: this.lastAnswer, pos: pos + 1 };
+        if (token.type === 'VARIABLE') return { value: (this.variables[token.value]||0), pos: pos + 1 };
+
+        throw new Error(`Unexpected: ${token.value}`);
+    }
+
+    formatResult(value) {
+        if (!isFinite(value)) throw new Error('Math error');
+        if (isNaN(value)) throw new Error('Invalid');
+        if (Math.abs(value) < 1e-10 && value !== 0) return value.toExponential(6);
+        if (Math.abs(value) >= 1e12) return value.toExponential(6);
+        return parseFloat(value.toPrecision(12)).toString();
+    }
+}
+
+// ========== 测试执行器 ==========
+const output = document.getElementById('output');
+const engine = new CalculatorEngine();
+const results = [];
+let passed = 0, failed = 0;
+
+function test(id, expr, expected, tol = 0) {
+    try {
+        const result = engine.evaluate(expr);
+
+        if (expected === 'Error') {
+            passed++;
+            results.push(`<span class="pass">✅ ${id}</span>: ${expr} → Error ✓`);
+            return;
+        }
+
+        const diff = Math.abs(parseFloat(result) - parseFloat(expected));
+        const ok = diff <= tol || result === expected;
+
+        if (ok) {
+            passed++;
+            results.push(`<span class="pass">✅ ${id}</span>: ${expr} = <b>${result}</b> (预期: ${expected})`);
+        } else {
+            failed++;
+            results.push(`<span class="fail">❌ ${id}</span>: ${expr} = <b>${result}</b> (预期: ${expected}, 差异: ${diff})`);
+        }
+    } catch(e) {
+        if (expected === 'Error') {
+            passed++;
+            results.push(`<span class="pass">✅ ${id}</span>: ${expr} → "${e.message}" ✓`);
+        } else {
+            failed++;
+            results.push(`<span class="fail">❌ ${id}</span>: ${expr} → Error: ${e.message} (预期: ${expected})`);
+        }
+    }
+}
+
+// 运行测试
+results.push('<span class="info">═══ 基础运算测试 ═══</span>');
+test('B01', '2+3', '5');
+test('B02', '10-4', '6');
+test('B03', '7*8', '56');
+test('B04', '100/4', '25');
+test('B05', '1+2+3+4+5', '15');
+test('B06', '100-50-25', '25');
+test('B07', '0.1+0.2', '0.3', 0.0001);
+test('B08', '-5+3', '-2');
+
+results.push('\n<span class="info">═══ 运算符优先级测试 ⭐ ═══</span>');
+test('P01', '2+3*4', '14');
+test('P02', '(2+3)*4', '20');
+test('P03', '10/(2+3)', '2');
+test('P04', '2*3+4*5', '26');
+test('P05', '2^3*3', '24');
+test('P06', '((2+3)*4)-5', '15');
+test('P07', '2+3*4^2', '50');
+test('P08', '(1+2)*(3+4)/(5-2)', '7');
+
+results.push('\n<span class="info">═══ 科学函数测试 ═══</span>');
+test('S01', 'sin(30)', '0.5', 0.001);
+test('S02', 'cos(60)', '0.5', 0.001);
+test('S03', 'tan(45)', '1', 0.001);
+test('S04', 'sqrt(9)+4', '7');
+test('S05', 'log(100)*3', '6');
+test('S06', 'ln(exp(3))', '3', 0.001);
+test('S07', '2^10', '1024');
+test('S08', 'abs(-5)', '5');
+
+results.push('\n<span class="info">═══ 功能组合测试 ═══</span>');
+test('C01', 'sqrt(3^2+4^2)', '5', 0.0001);
+test('C02', 'sin(cos(0))', '0.84147', 0.0001);
+test('C03', 'pi*5^2', '78.53982', 0.01);
+test('C04', '120/1/2/3/4/5', '1');
+
+results.push('\n<span class="info">═══ 边界情况测试 ═══</span>');
+test('E01', '10/0', 'Error');
+test('E02', 'sqrt(-1)', 'Error');
+test('E03', '(-1)!', 'Error');
+test('E04', '0!', '1');
+test('E05', '5!', '120');
+
+results.push('\n' + '═'.repeat(50));
+const total = passed + failed;
+const rate = ((passed/total)*100).toFixed(1);
+results.push(`<b>📊 总计: ${total} | 通过: <span class="pass">${passed}</span> | 失败: <span class="fail">${failed}</span></b>`);
+results.push(`<b>📈 通过率: <span class="${rate>=95?'pass':rate>=80?'info':'fail'}">${rate}%</span></b>`);
+
+if (rate === '100.0') {
+    results.push('\n🎉🎉🎉 完美！所有测试全部通过！计算器可以发布了！');
+} else if (rate >= 90) {
+    results.push('\n⭐ 优秀！通过率超过90%');
+} else {
+    results.push(`\n⚠️ 通过率 ${rate}%，需要继续优化`);
+}
+results.push('═'.repeat(50));
+
+output.innerHTML = results.join('\n');
+    </script>
+</body>
+</html>

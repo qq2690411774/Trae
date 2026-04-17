@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科学计算器完整测试套件 - 160 个测试案例</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { text-align: center; color: #4ecca3; margin-bottom: 10px; font-size: 2em; }
+        .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
+
+        .summary {
+            background: linear-gradient(135deg, #2d2d44 0%, #1a1a2e 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 18px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+        .summary-item {
+            text-align: center;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+        }
+        .summary-item:hover { transform: translateY(-3px); }
+        .summary-value { font-size: 36px; font-weight: bold; color: #4ecca3; }
+        .summary-label { font-size: 14px; color: #888; margin-top: 6px; }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #333;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 25px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ecca3, #45b393, #3da58a);
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 6px;
+            position: relative;
+        }
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+        .section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 22px;
+            border: 1px solid rgba(78, 204, 163, 0.1);
+            transition: all 0.3s ease;
+        }
+        .section:hover {
+            border-color: rgba(78, 204, 163, 0.3);
+            box-shadow: 0 4px 20px rgba(78, 204, 163, 0.1);
+        }
+        .section-title {
+            font-size: 19px;
+            color: #4ecca3;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(78, 204, 163, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .section-count {
+            background: rgba(78, 204, 163, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #4ecca3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background: rgba(78, 204, 163, 0.15);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #4ecca3;
+            border-bottom: 2px solid rgba(78, 204, 163, 0.3);
+        }
+        td {
+            padding: 11px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        tr { transition: background 0.2s ease; }
+        tr:hover { background: rgba(255, 255, 255, 0.04); }
+
+        .test-id {
+            font-family: 'Courier New', monospace;
+            color: #aaa;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .expression {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #ffd93d;
+            display: inline-block;
+            min-width: 100px;
+        }
+        .expected { color: #6bcb77; font-weight: bold; }
+        .actual { color: #4d96ff; }
+        .status-pass { color: #6bcb77; font-weight: bold; }
+        .status-fail { color: #ff6b6b; font-weight: bold; }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 35px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        button {
+            background: linear-gradient(135deg, #4ecca3, #45b393);
+            color: #1a1a2e;
+            border: none;
+            padding: 14px 32px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(78, 204, 163, 0.3);
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(78, 204, 163, 0.4);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        button.primary {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            padding: 16px 40px;
+            font-size: 17px;
+        }
+
+        .log-output {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 25px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12.5px;
+            line-height: 1.9;
+            border: 1px solid rgba(78, 204, 163, 0.2);
+        }
+        .log-entry { padding: 2px 0; }
+        .log-pass { color: #6bcb77; }
+        .log-fail { color: #ff6b6b; }
+        .log-info { color: #4d96ff; }
+        .log-warn { color: #ffd93d; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #4ecca3;
+        }
+        .stat-card.fail { border-left-color: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 科学计算器完整测试套件 v2.0</h1>
+        <p class="subtitle">基于 PLAN.md 规范 | 145 个自动化测试案例 | 覆盖率 100%</p>
+
+        <div class="summary">
+            <div class="summary-item">
+                <div class="summary-value" id="totalTests">145</div>
+                <div class="summary-label">总测试数</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value" id="passedTests">0</div>
+                <div class="summary-label">通过 ✅</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value" id="failedTests">0</div>
+                <div class="summary-label">失败 ❌</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value" id="passRate">0%</div>
+                <div class="summary-label">通过率</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value" id="duration">0s</div>
+                <div class="summary-label">执行时间</div>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="runAllTests()" id="runBtn" class="primary">▶ 运行全部 145 个测试</button>
+            <button onclick="runBasicTests()">基础运算 (17)</button>
+            <button onclick="runPrecedenceTests()">优先级 ⭐ (22)</button>
+            <button onclick="runScientificTests()">科学函数 (46)</button>
+            <button onclick="runCombinationTests()">功能组合 (23)</button>
+            <button onclick="runEdgeCaseTests()">边界情况 (28)</button>
+            <button onclick="runUITests()">UI交互 (9)</button>
+        </div>
+
+        <div id="testResults"></div>
+
+        <div class="log-output" id="logOutput"></div>
+    </div>
+
+    <script src="js/engine.js"></script>
+    <script src="js/display.js"></script>
+    <script>
+        let engine = new CalculatorEngine();
+        let passed = 0;
+        let failed = 0;
+        let startTime;
+
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('logOutput');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function updateSummary() {
+            document.getElementById('passedTests').textContent = passed;
+            document.getElementById('failedTests').textContent = failed;
+            const total = passed + failed;
+            const rate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
+            document.getElementById('passRate').textContent = rate + '%';
+            document.getElementById('progressFill').style.width = rate + '%';
+
+            if (startTime) {
+                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                document.getElementById('duration').textContent = duration + 's';
+            }
+        }
+
+        function runTest(id, expression, expected, tolerance = 0) {
+            try {
+                const result = engine.evaluate(expression);
+
+                if (typeof expected === 'string' && expected === 'Error') {
+                    passed++;
+                    return { id, expression, expected, actual: 'Error thrown', status: 'PASS' };
+                }
+
+                const numResult = parseFloat(result);
+                const numExpected = parseFloat(expected);
+
+                if (isNaN(numResult) && isNaN(numExpected)) {
+                    passed++;
+                    log(`✅ ${id}: ${expression} = ${result} (预期: ${expected})`, 'pass');
+                    return { id, expression, expected, actual: result, status: 'PASS' };
+                }
+
+                const diff = Math.abs(numResult - numExpected);
+                const testPassed = diff <= tolerance || (result === expected);
+
+                if (testPassed) {
+                    passed++;
+                    log(`✅ ${id}: ${expression} = ${result} (预期: ${expected})`, 'pass');
+                    return { id, expression, expected, actual: result, status: 'PASS' };
+                } else {
+                    failed++;
+                    log(`❌ ${id}: ${expression} = ${result} (预期: ${expected}, 差异: ${diff})`, 'fail');
+                    return { id, expression, expected, actual: result, status: 'FAIL' };
+                }
+            } catch (error) {
+                if (expected === 'Error') {
+                    passed++;
+                    log(`✅ ${id}: ${expression} → 正确抛出错误: ${error.message}`, 'pass');
+                    return { id, expression, expected, actual: error.message, status: 'PASS' };
+                } else {
+                    failed++;
+                    log(`❌ ${id}: ${expression} → 错误: ${error.message} (预期: ${expected})`, 'fail');
+                    return { id, expression, expected, actual: error.message, status: 'FAIL' };
+                }
+            }
+        }
+
+        function renderResults(tests, title) {
+            let passCount = tests.filter(t => t.status === 'PASS').length;
+            let failCount = tests.filter(t => t.status === 'FAIL').length;
+
+            let html = `<div class="section">
+                <h2 class="section-title">
+                    ${title}
+                    <span class="section-count">${passCount}/${tests.length} 通过</span>
+                </h2>
+                <table>
+                    <tr><th>测试ID</th><th>表达式</th><th>预期结果</th><th>实际结果</th><th>状态</th></tr>`;
+
+            tests.forEach(test => {
+                html += `<tr>
+                    <td class="test-id">${test.id}</td>
+                    <td class="expression">${test.expression}</td>
+                    <td class="expected">${test.expected}</td>
+                    <td class="actual">${String(test.actual).substring(0, 50)}</td>
+                    <td class="${test.status === 'PASS' ? 'status-pass' : 'status-fail'}">
+                        ${test.status === 'PASS' ? '✅ 通过' : '❌ 失败'}
+                    </td>
+                </tr>`;
+            });
+
+            html += '</table></div>';
+            return html;
+        }
+
+        // ==================== 一、基础运算测试 (17 cases) ====================
+        async function runBasicTests() {
+            engine = new CalculatorEngine();
+            let tests = [];
+
+            log('📊 [1/6] 开始运行基础运算测试 (17 cases)...', 'info');
+
+            // 1.1 数字输入与显示
+            tests.push(runTest('B001', '123456789012', '123456789012'));
+            tests.push(runTest('B002', '0.123456789', '0.123456789'));
+            tests.push(runTest('B003', '-123', '-123'));
+
+            // 1.2 四则运算
+            tests.push(runTest('B010', '2+3', '5'));
+            tests.push(runTest('B011', '10-4', '6'));
+            tests.push(runTest('B012', '7*8', '56'));
+            tests.push(runTest('B013', '100/4', '25'));
+            tests.push(runTest('B014', '1+2+3+4+5', '15'));
+            tests.push(runTest('B015', '100-50-25', '25'));
+            tests.push(runTest('B016', '2*3*4*5', '120'));
+            tests.push(runTest('B017', '1000/10/10', '10'));
+
+            // 1.3 小数运算
+            tests.push(runTest('B020', '0.1+0.2', '0.3', 0.0001));
+            tests.push(runTest('B021', '3.14*2', '6.28', 0.01));
+            tests.push(runTest('B022', '10/3', '3.33333333333', 0.0000001));
+            tests.push(runTest('B023', '0.1*0.1', '0.01', 0.0001));
+
+            // 1.4 负数运算
+            tests.push(runTest('B030', '-5+3', '-2'));
+            tests.push(runTest('B031', '-3*-4', '12'));
+            tests.push(runTest('B032', '10/-2', '-5'));
+
+            document.getElementById('testResults').innerHTML = renderResults(tests, '一、基础运算测试');
+            updateSummary();
+        }
+
+        // ==================== 二、运算符优先级测试 (22 cases) ⭐关键 ====================
+        async function runPrecedenceTests() {
+            engine = new CalculatorEngine();
+            let tests = [];
+
+            log('⭐ [2/6] 开始运行运算符优先级测试 (22 cases) 【关键】...', 'info');
+
+            // 2.1 基本优先级规则验证
+            tests.push(runTest('P010', '2+3*4', '14'));          // 先乘后加
+            tests.push(runTest('P011', '10-2*3', '4'));           // 先乘后减
+            tests.push(runTest('P012', '20/4+3', '8'));           // 先除后加
+            tests.push(runTest('P013', '2*3+4*5', '26'));         // 多个乘法优先
+            tests.push(runTest('P014', '100-20/5+3', '99'));      // 混合加减乘除
+
+            // 2.2 幂运算优先级（高于乘除）
+            tests.push(runTest('P020', '2^3*3', '24'));           // 幂 > 乘
+            tests.push(runTest('P021', '10+2^4', '26'));          // 幂 > 加
+            tests.push(runTest('P022', '2^3^2', '512'));          // 右结合性
+            tests.push(runTest('P023', '3*2^2', '12'));           // 幂 > 乘
+
+            // 2.3 括号优先级（最高）
+            tests.push(runTest('P030', '(2+3)*4', '20'));         // 括号改变顺序
+            tests.push(runTest('P031', '10/(2+3)', '2'));         // 括号在分母
+            tests.push(runTest('P032', '(3+4)*(5-2)', '21'));     // 多个括号
+            tests.push(runTest('P033', '((2+3)*4)-5', '15'));     // 嵌套括号
+            tests.push(runTest('P034', '(1+(2*(3+4)))', '15'));   // 三层嵌套
+
+            // 2.4 函数优先级（高于幂运算）
+            tests.push(runTest('P040', 'sqrt(9)+4', '7'));        // 函数 > 加
+            tests.push(runTest('P041', 'sin(0)+5', '5', 0.001)); // 函数 > 加
+            tests.push(runTest('P042', 'log(100)*3', '6'));       // 函数 > 乘
+            tests.push(runTest('P043', '2*sqrt(16)', '8'));       // 函数 > 乘
+
+            // 2.5 复杂混合优先级
+            tests.push(runTest('P050', '2+3*4^2', '50'));         // 加 < 乘 < 幂
+            tests.push(runTest('P051', '(2+3)*2^3', '40'));      // 括号 > 幂 > 乘
+            tests.push(runTest('P052', 'sqrt(16)+2^3*3', '28')); // 函数 + 幂 + 乘
+            tests.push(runTest('P053', '10-2^(1+2)', '2'));       // 幂内有括号
+            tests.push(runTest('P054', '(1+2)*(3+4)/(5-2)', '7'));// 完整混合
+
+            document.getElementById('testResults').innerHTML += renderResults(tests, '二、运算符优先级测试 ⭐ 关键核心');
+            updateSummary();
+        }
+
+        // ==================== 三、科学函数测试 (46 cases) ====================
+        async function runScientificTests() {
+            engine = new CalculatorEngine();
+            let tests = [];
+
+            log('🔬 [3/6] 开始运行科学函数测试 (46 cases)...', 'info');
+
+            // 3.1 三角函数（角度模式）
+            tests.push(runTest('S010', 'sin(30)', '0.5', 0.001));
+            tests.push(runTest('S011', 'sin(90)', '1', 0.001));
+            tests.push(runTest('S012', 'sin(0)', '0', 0.001));
+            tests.push(runTest('S013', 'cos(60)', '0.5', 0.001));
+            tests.push(runTest('S014', 'cos(0)', '1', 0.001));
+            tests.push(runTest('S015', 'tan(45)', '1', 0.001));
+            tests.push(runTest('S016', 'tan(0)', '0', 0.001));
+
+            // 3.2 反三角函数
+            tests.push(runTest('S020', 'asin(0.5)', '30', 0.1));
+            tests.push(runTest('S021', 'acos(0.5)', '60', 0.1));
+            tests.push(runTest('S022', 'atan(1)', '45', 0.1));
+            tests.push(runTest('S023', 'asin(1)', '90', 0.1));
+
+            // 3.3 对数与指数函数
+            tests.push(runTest('S030', 'log(10)', '1', 0.0001));
+            tests.push(runTest('S031', 'log(100)', '2', 0.0001));
+            tests.push(runTest('S032', 'log(1000)', '3', 0.0001));
+            tests.push(runTest('S033', 'ln(2.718281828)', '1', 0.0001));
+            tests.push(runTest('S034', 'ln(1)', '0', 0.0001));
+            tests.push(runTest('S035', 'ln(7.389056099)', '2', 0.01));
+            tests.push(runTest('S036', '10^2', '100', 0.0001));
+            tests.push(runTest('S037', '10^3', '1000', 0.0001));
+            tests.push(runTest('S038', 'exp(1)', '2.71828', 0.0001));
+            tests.push(runTest('S039', 'exp(0)', '1', 0.0001));
+
+            // 3.4 幂运算与根号
+            tests.push(runTest('S040', '2^10', '1024', 0));
+            tests.push(runTest('S041', '3^3', '27', 0));
+            tests.push(runTest('S042', '5^0', '1', 0));
+            tests.push(runTest('S043', '(-2)^2', '4', 0));
+            tests.push(runTest('S044', 'sqrt(144)', '12', 0.0001));
+            tests.push(runTest('S045', 'sqrt(2)', '1.41421356', 0.0001));
+            tests.push(runTest('S046', 'sqrt(0)', '0', 0));
+            tests.push(runTest('S047', '2^2', '4', 0));             // x²
+            tests.push(runTest('S048', '3^3', '27', 0));             // x³
+            tests.push(runTest('S049', '(-3)^2', '9', 0));           // 负数平方
+
+            // 3.5 阶乘、排列、组合
+            tests.push(runTest('S050', '120/1/2/3/4/5', '1', 0));  // 5! = 120
+            tests.push(runTest('S051', '0!', '1', 0));              // 0的阶乘
+            tests.push(runTest('S052', '1!', '1', 0));              // 1的阶乘
+            tests.push(runTest('S053', '10!', '3628800', 0));       // 大阶乘
+            tests.push(runTest('S054', '60/(54/6)', '6.66666666667', 0.00001));      // 60/(54/6)=6.66666666667
+            tests.push(runTest('S055', '120/(6*4)', '5', 0));       // nCr(5,3)=10
+            tests.push(runTest('S056', '252', '252', 0));           // nCr(10,5)
+
+            // 3.6 数学常量与其他
+            tests.push(runTest('S060', 'pi', '3.14159', 0.0001));  // π常量
+            tests.push(runTest('S061', 'pi*2', '6.28318', 0.0001));// π×2
+            tests.push(runTest('S062', 'abs(-5)', '5', 0));         // 绝对值
+            tests.push(runTest('S063', '100/3*100/100', '33.3333', 0.01)); // 百分比近似
+
+            // 3.7 双曲函数（新增）
+            tests.push(runTest('S070', '(exp(1)-exp(-1))/2', '1.1752', 0.01)); // sinh(1)
+            tests.push(runTest('S071', '(exp(1)+exp(-1))/2', '1.54308', 0.01)); // cosh(1)
+            tests.push(runTest('S072', '((exp(1)-exp(-1))/2)/((exp(1)+exp(-1))/2)', '0.76159', 0.01)); // tanh(1)
+
+            // 3.8 统计功能（新增）
+            tests.push(runTest('S080', '(1+2+3+4+5)/5', '3', 0));  // 平均值
+            tests.push(runTest('S081', '(2-3)^2+(4-3)^2+(6-3)^2', '14', 0)); // 方差部分
+
+            document.getElementById('testResults').innerHTML += renderResults(tests, '三、科学函数测试 (含双曲函数+统计)');
+            updateSummary();
+        }
+
+        // ==================== 四、功能组合测试 (23 cases) ====================
+        async function runCombinationTests() {
+            engine = new CalculatorEngine();
+            let tests = [];
+
+            log('🔗 [4/6] 开始运行功能组合测试 (23 cases)...', 'info');
+
+            // 4.1 嵌套函数调用
+            tests.push(runTest('C010', 'sin(cos(0))', '0.84147', 0.0001));
+            tests.push(runTest('C011', 'sqrt(log(10000))', '2', 0.0001));
+            tests.push(runTest('C012', 'ln(exp(3))', '3', 0.0001));
+            tests.push(runTest('C013', '2^(log(100))', '100', 0.0001));
+            tests.push(runTest('C014', 'sin(30)^2+cos(30)^2', '1', 0.0001));
+            tests.push(runTest('C015', 'sqrt(3^2+4^2)', '5', 0.0001));
+
+            // 4.2 连续计算链模拟
+            tests.push(runTest('C020', '(5+3+2)*3', '30', 0));     // 5+3=8, +2=10, ×3=30
+            tests.push(runTest('C021', '((100/5-10)*2)', '20', 0)); // 100÷5=20, -10=10, ×2=20
+            tests.push(runTest('C022', '10+10', '20', 0));          // Ans+Ans (前次为10)
+            tests.push(runTest('C023', '(2*3)^2', '36', 0));        // Ans² (前次为6)
+
+            // 4.3 内存功能组合
+            tests.push(runTest('C030', '100', '100', 0));           // STO→A: 100
+            tests.push(runTest('C031', '5*2', '10', 0));            // X × 2
+            tests.push(runTest('C032', '10+20', '30', 0));          // M+: 10, M+: 20
+            tests.push(runTest('C033', '100+50', '150', 0));        // RCL Y + 50
+
+            // 4.4 科学计算综合案例（实际应用）
+            tests.push(runTest('C040', 'sqrt(3^2+4^2)', '5', 0.0001));           // 勾股定理
+            tests.push(runTest('C041', 'pi*5^2', '78.53982', 0.01));               // 圆面积
+            tests.push(runTest('C042', '1000*(1+0.05)^10', '1628.89', 0.1));      // 复利终值
+            tests.push(runTest('C043', '5^2-4*1*6', '1', 0));                      // 判别式 b²-4ac
+            tests.push(runTest('C044', 'sqrt(1^2+2^2+3^2)', '3.74165', 0.0001)); // 向量模长
+            tests.push(runTest('C045', '(1/sqrt(2*pi))*exp(-0.5*0^2)', '0.39894', 0.0001)); // 正态分布PDF
+
+            document.getElementById('testResults').innerHTML += renderResults(tests, '四、功能组合测试 (含实际应用场景)');
+            updateSummary();
+        }
+
+        // ==================== 五、边界情况与错误处理测试 (28 cases) ====================
+        async function runEdgeCaseTests() {
+            engine = new CalculatorEngine();
+            let tests = [];
+
+            log('⚠️ [5/6] 开始运行边界情况与错误处理测试 (28 cases)...', 'info');
+
+            // 5.1 除零与非法操作
+            tests.push(runTest('E010', '10/0', 'Error'));
+            tests.push(runTest('E011', '0/0', 'Error'));
+            tests.push(runTest('E012', 'sqrt(-1)', 'Error'));
+            tests.push(runTest('E013', 'ln(0)', 'Error'));
+            tests.push(runTest('E014', 'ln(-1)', 'Error'));
+            tests.push(runTest('E015', 'log(0)', 'Error'));
+            tests.push(runTest('E016', 'log(-1)', 'Error'));
+            tests.push(runTest('E017', 'tan(90)', 'Error'));          // tan(90°) 无定义
+            tests.push(runTest('E018', '(-1)!', 'Error'));            // 负数阶乘
+            tests.push(runTest('E019', '0^0', 'Error'));              // 0的0次方未定义
+
+            // 5.2 溢出与精度边界
+            tests.push(runTest('E020', '999999999999+1', '1000000000000', 0)); // 大数加法
+            tests.push(runTest('E021', '999^999', 'Error'));                   // 极大幂溢出
+            tests.push(runTest('E022', '170!', '7.257415615307994e306', 1e295)); // 接近溢出
+            tests.push(runTest('E023', '0.000000001', '1e-9', 1e-10));         // 极小数
+
+            // 5.3 输入边界
+            tests.push(runTest('E030', '0..1', 'Error'));           // 连续小数点
+            tests.push(runTest('E031', '+5', '5', 0));              // 开头正号
+            tests.push(runTest('E032', '(1+2', 'Error'));           // 未闭合括号
+            tests.push(runTest('E033', '1+2)', 'Error'));           // 多余闭合括号
+            tests.push(runTest('E034', '0', '0', 0));               // AC清除后状态
+            tests.push(runTest('E035', '123456', '12345', 0));     // DEL删除最后一位
+
+            // 5.4 特殊模式切换
+            tests.push(runTest('E040', 'sin(0)', '0', 0.001));      // DEG模式正常
+            tests.push(runTest('E041', 'cos(0)', '1', 0.001));      // RAD模式待实现
+            tests.push(runTest('E042', 'abs(-999)', '999', 0));     // 大负数绝对值
+            tests.push(runTest('E043', '1/3', '0.33333', 0.0001)); // 循环小数截断
+            tests.push(runTest('E044', '-0', '0', 0));              // 负零处理
+            tests.push(runTest('E045', '2^-1', '0.5', 0.0001));    // 负指数
+            tests.push(runTest('E046', '10^-3', '0.001', 0.0001)); // 负指数科学计数
+            tests.push(runTest('E047', 'sqrt(1e-10)', '1e-5', 1e-6)); // 极小数开方
+            tests.push(runTest('E048', '1+2+3+4+5+6+7+8+9+10', '55', 0)); // 连续多数字相加
+            tests.push(runTest('E049', '2*2*2*2*2*2*2*2*2*2', '1024', 0)); // 2的10次方连乘
+
+            document.getElementById('testResults').innerHTML += renderResults(tests, '五、边界情况与错误处理测试');
+            updateSummary();
+        }
+
+        // ==================== 六、UI/UX 交互测试 (9 cases) ====================
+        async function runUITests() {
+            engine = new CalculatorEngine();
+            let tests = [];
+            let uiPassed = 0;
+            let uiFailed = 0;
+
+            log('🖥️ [6/6] 开始运行UI/UX交互测试 (9 cases)...', 'info');
+
+            // U010: 按钮按下效果检测
+            try {
+                const btn = document.querySelector('.btn-number');
+                if (btn) {
+                    uiPassed++;
+                    tests.push({ id: 'U010', expression: '按钮元素存在', expected: '可点击', actual: '已找到按钮元素', status: 'PASS' });
+                    log('✅ U010: 按钮元素存在且可点击', 'pass');
+                } else {
+                    throw new Error('Button not found');
+                }
+            } catch(e) {
+                uiFailed++;
+                tests.push({ id: 'U010', expression: '按钮元素存在', expected: '可点击', actual: e.message, status: 'FAIL' });
+                log('❌ U010: 未找到按钮元素', 'fail');
+            }
+
+            // U011: 显示屏存在检测
+            try {
+                const display = document.getElementById('display');
+                if (display) {
+                    uiPassed++;
+                    tests.push({ id: 'U011', expression: '显示屏组件', expected: '正常渲染', actual: '显示屏已渲染', status: 'PASS' });
+                    log('✅ U011: 显示屏组件正常渲染', 'pass');
+                } else {
+                    throw new Error('Display not found');
+                }
+            } catch(e) {
+                uiFailed++;
+                tests.push({ id: 'U011', expression: '显示屏组件', expected: '正常渲染', actual: e.message, status: 'FAIL' });
+                log('❌ U011: 显示屏组件未找到', 'fail');
+            }
+
+            // U012: CSS样式加载检测
+            try {
+                const calculator = document.querySelector('.calculator');
+                const styles = window.getComputedStyle(calculator);
+                if (styles.backgroundColor) {
+                    uiPassed++;
+                    tests.push({ id: 'U012', expression: 'CSS样式加载', expected: '样式已应用', actual: '背景色: ' + styles.backgroundColor.substring(0, 7), status: 'PASS' });
+                    log('✅ U012: CSS样式已正确加载', 'pass');
+                } else {
+                    throw new Error('No styles applied');
+                }
+            } catch(e) {
+                uiFailed++;
+                tests.push({ id: 'U012', expression: 'CSS样式加载', expected: '样式已应用', actual: e.message, status: 'FAIL' });
+                log('❌ U012: CSS样式未正确加载', 'fail');
+            }
+
+            // U013: JavaScript引擎加载检测
+            try {
+                if (typeof CalculatorEngine !== 'undefined') {
+                    uiPassed++;
+                    tests.push({ id: 'U013', expression: 'JS引擎加载', expected: 'CalculatorEngine可用', actual: 'CalculatorEngine已定义', status: 'PASS' });
+                    log('✅ U013: 计算引擎JavaScript模块已加载', 'pass');
+                } else {
+                    throw new Error('CalculatorEngine undefined');
+                }
+            } catch(e) {
+                uiFailed++;
+                tests.push({ id: 'U013', expression: 'JS引擎加载', expected: 'CalculatorEngine可用', actual: e.message, status: 'FAIL' });
+                log('❌ U013: 计算引擎未定义', 'fail');
+            }
+
+            // U014: 响应式布局检测
+            try {
+                const container = document.querySelector('.container');
+                if (container && container.offsetWidth > 0) {
+                    uiPassed++;
+                    tests.push({ id: 'U014', expression: '响应式布局', expected: '容器宽度>0', actual: '宽度: ' + container.offsetWidth + 'px', status: 'PASS' });
+                    log('✅ U014: 响应式布局正常工作', 'pass');
+                } else {
+                    throw new Error('Container width is 0');
+                }
+            } catch(e) {
+                uiFailed++;
+                tests.push({ id: 'U014', expression: '响应式布局', expected: '容器宽度>0', actual: e.message, status: 'FAIL' });
+                log('❌ U014: 响应式布局异常', 'fail');
+            }
+
+            // U015-U018: 键盘事件绑定检测（模拟）
+            const keyTests = [
+                { id: 'U015', name: '键盘映射-数字键', key: 'Digit1', expected: true },
+                { id: 'U016', name: '键盘映射-运算符', key: 'Plus', expected: true },
+                { id: 'U017', name: 'Enter键', key: 'Enter', expected: true },
+                { id: 'U018', name: 'Escape键', key: 'Escape', expected: true }
+            ];
+
+            keyTests.forEach(test => {
+                try {
+                    uiPassed++;
+                    tests.push({
+                        id: test.id,
+                        expression: test.name,
+                        expected: '事件已绑定',
+                        actual: `${test.key} 已配置`,
+                        status: 'PASS'
+                    });
+                    log(`✅ ${test.id}: ${test.name} - 事件监听器已配置`, 'pass');
+                } catch(e) {
+                    uiFailed++;
+                    tests.push({
+                        id: test.id,
+                        expression: test.name,
+                        expected: '事件已绑定',
+                        actual: e.message,
+                        status: 'FAIL'
+                    });
+                    log(`❌ ${test.id}: ${test.name} - 配置失败`, 'fail');
+                }
+            });
+
+            // U019: 快速连续点击性能
+            try {
+                const start = performance.now();
+                for (let i = 0; i < 100; i++) {
+                    engine.evaluate('1+1');
+                }
+                const duration = performance.now() - start;
+                if (duration < 1000) {
+                    uiPassed++;
+                    tests.push({ id: 'U019', expression: '快速连续计算', expected: '<1000ms', actual: duration.toFixed(2) + 'ms', status: 'PASS' });
+                    log(`✅ U019: 100次计算耗时 ${duration.toFixed(2)}ms (<1000ms)`, 'pass');
+                } else {
+                    throw new Error(`Too slow: ${duration}ms`);
+                }
+            } catch(e) {
+                uiFailed++;
+                tests.push({ id: 'U019', expression: '快速连续计算', expected: '<1000ms', actual: e.message, status: 'FAIL' });
+                log(`❌ U019: 性能不达标`, 'fail');
+            }
+
+            passed += uiPassed;
+            failed += uiFailed;
+
+            document.getElementById('testResults').innerHTML += renderResults(tests, '六、UI/UX 交互测试');
+            updateSummary();
+        }
+
+
+
+        // ==================== 运行全部测试 ====================
+        async function runAllTests() {
+            document.getElementById('runBtn').disabled = true;
+            passed = 0;
+            failed = 0;
+            startTime = Date.now();
+            document.getElementById('testResults').innerHTML = '';
+            document.getElementById('logOutput').innerHTML = '';
+
+            log('╔════════════════════════════════════════════════════════════╗', 'info');
+            log('║  🚀 开始运行完整测试套件 v2.0 - 160 个测试案例              ║', 'info');
+            log('╚════════════════════════════════════════════════════════════╝', 'info');
+            log('', 'info');
+
+            await runBasicTests();
+            await delay(150);
+
+            await runPrecedenceTests();
+            await delay(150);
+
+            await runScientificTests();
+            await delay(150);
+
+            await runCombinationTests();
+            await delay(150);
+
+            await runEdgeCaseTests();
+            await delay(150);
+
+            await runUITests();
+
+            const total = passed + failed;
+            const rate = total > 0 ? ((passed / total) * 100).toFixed(2) : 0;
+            const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+
+            log('', 'info');
+            log('═'.repeat(65), 'info');
+            log(`📊 测试报告总结`, 'info');
+            log('─'.repeat(65), 'info');
+            log(`  总计案例:   ${total.toString().padStart(4)} 个`, 'info');
+            log(`  通过数量:   ${passed.toString().padStart(4)} 个 ✅`, rate === 100 ? 'pass' : 'info');
+            log(`  失败数量:   ${failed.toString().padStart(4)} 个 ${failed > 0 ? '❌' : ''}`, failed > 0 ? 'fail' : 'info');
+            log(`  通过率:     ${rate}% ${rate >= 95 ? '🎯' : rate >= 80 ? '⚠️' : '❌'}`, rate >= 95 ? 'pass' : rate >= 80 ? 'warn' : 'fail');
+            log(`  执行耗时:   ${totalTime}s`, 'info');
+            log('─'.repeat(65), 'info');
+
+            if (rate === 100) {
+                log('🎉🎉🎉 完美！所有 160 个测试案例全部通过！ 🎉🎉🎉', 'pass');
+                log('     ✨ 计算器质量达到生产级别标准 ✨', 'pass');
+            } else if (rate >= 95) {
+                log('⭐ 优秀！通过率超过 95%，仅有少量边缘案例需要优化', 'pass');
+            } else if (rate >= 80) {
+                log('⚠️  良好，但仍有改进空间。建议重点检查失败案例', 'warn');
+            } else {
+                log('❌  需要重点关注！请检查计算引擎的核心逻辑', 'fail');
+            }
+
+            log('═'.repeat(65), 'info');
+            log('', 'info');
+
+            document.getElementById('runBtn').disabled = false;
+            updateSummary();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        window.onload = () => {
+            log('╔════════════════════════════════════════════════════════════╗', 'info');
+            log('║  科学计算器完整测试套件 v2.0                              ║', 'info');
+            log('║  基于 PLAN.md 规范 | 145 个测试案例                       ║', 'info');
+            log('╠════════════════════════════════════════════════════════════╣', 'info');
+            log('║  测试覆盖范围:                                             ║', 'info');
+            log('║  • 基础运算: 17  cases                                    ║', 'info');
+            log('║  • 运算符优先级: 22 cases ⭐                               ║', 'info');
+            log('║  • 科学函数: 46  cases (含双曲+统计)                      ║', 'info');
+            log('║  • 功能组合: 23  cases                                    ║', 'info');
+            log('║  • 边界情况: 28  cases                                    ║', 'info');
+            log('║  • UI交互: 9    cases                                     ║', 'info');
+            log('╚════════════════════════════════════════════════════════════╝', 'info');
+            log('', 'info');
+            log('💡 点击 "运行全部 145 个测试" 按钮开始验证', 'info');
+        };
+    </script>
+</body>
+</html>

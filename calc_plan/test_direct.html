@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>直接测试</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a1a2e;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #4ecca3;
+            margin-bottom: 15px;
+        }
+        .digit {
+            position: relative;
+            width: 35px;
+            height: 60px;
+            background: #1a0a0a;
+            border: 2px solid #4a3a3a;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 10px;
+        }
+        .segment {
+            position: absolute;
+            background: #ff0000;
+            box-shadow: 0 0 6px #ff0000, 0 0 12px #ff0000;
+        }
+        /* 段位置 */
+        .segment-a {
+            top: 5px;
+            left: 8px;
+            width: 19px;
+            height: 4px;
+        }
+        .segment-b {
+            top: 9px;
+            right: 8px;
+            width: 4px;
+            height: 22px;
+        }
+        .segment-c {
+            bottom: 9px;
+            right: 8px;
+            width: 4px;
+            height: 22px;
+        }
+        .segment-d {
+            bottom: 5px;
+            left: 8px;
+            width: 19px;
+            height: 4px;
+        }
+        .segment-e {
+            bottom: 9px;
+            left: 8px;
+            width: 4px;
+            height: 22px;
+        }
+        .segment-f {
+            top: 9px;
+            left: 8px;
+            width: 4px;
+            height: 22px;
+        }
+        .segment-g {
+            top: 29px;
+            left: 8px;
+            width: 19px;
+            height: 4px;
+        }
+        .segment-dp {
+            bottom: 5px;
+            right: 2px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-section">
+        <h2>直接测试数字显示</h2>
+        <p>硬编码测试数字3、1和小数点：</p>
+        
+        <!-- 数字3 -->
+        <div class="digit">
+            <div class="segment segment-a"></div>
+            <div class="segment segment-b"></div>
+            <div class="segment segment-c"></div>
+            <div class="segment segment-d"></div>
+            <div class="segment segment-g"></div>
+        </div>
+        <span>数字3</span>
+        
+        <!-- 数字1 -->
+        <div class="digit">
+            <div class="segment segment-b"></div>
+            <div class="segment segment-c"></div>
+        </div>
+        <span>数字1</span>
+        
+        <!-- 小数点 -->
+        <div class="digit">
+            <div class="segment segment-dp"></div>
+        </div>
+        <span>小数点</span>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试3.1显示</h2>
+        <div class="digit">
+            <div class="segment segment-a"></div>
+            <div class="segment segment-b"></div>
+            <div class="segment segment-c"></div>
+            <div class="segment segment-d"></div>
+            <div class="segment segment-g"></div>
+        </div>
+        <div class="digit">
+            <div class="segment segment-dp"></div>
+        </div>
+        <div class="digit">
+            <div class="segment segment-b"></div>
+            <div class="segment segment-c"></div>
+        </div>
+        <span>3.1</span>
+    </div>
+</body>
+</html>
