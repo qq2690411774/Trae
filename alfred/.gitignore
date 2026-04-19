@@ -17,7 +17,7 @@ __pycache__/
 *.log
 
 # Build outputs
-dist/
+# dist/ - keep frontend/dist to serve from backend
 build/
 
 # IDE
