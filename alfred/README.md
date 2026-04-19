@@ -18,18 +18,6 @@ export OPENAI_API_KEY="sk-..."
 
 # ZhipuAI (GLM models)
 export ZHIPU_API_KEY="..."
-
-# MiniMax
-export MINIMAX_API_KEY="..."
-
-# ByteDance (Doubao)
-export DOUBAO_API_KEY="..."
-
-# Moonshot (Kimi)
-export MOONSHOT_API_KEY="..."
-
-# Alibaba (Qwen)
-export DASHSCOPE_API_KEY="..."
 ```
 
 ### 2. Start Backend
@@ -115,13 +103,9 @@ The prompt follows a structured format:
 
 | Model | Provider | API Compatibility |
 |-------|----------|-------------------|
-| GPT-4o-mini | OpenAI | OpenAI SDK |
-| MiniMax-M2.5 | MiniMax | OpenAI Compatible |
-| Doubao-Seed-Code | ByteDance | OpenAI Compatible |
 | GLM-5.1 | ZhipuAI | OpenAI Compatible |
 | GLM-5V-Turbo | ZhipuAI | OpenAI Compatible |
-| Kimi-K2.5 | Moonshot | OpenAI Compatible |
-| Qwen3.6-Plus | Alibaba | OpenAI Compatible |
+| GPT-4o-mini | OpenAI | OpenAI SDK |
 
 All models are accessed via the OpenAI-compatible API interface. Users can switch models from the UI dropdown.
 

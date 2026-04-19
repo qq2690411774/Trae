@@ -202,20 +202,16 @@ ELSE → CONFIRM_FIRST  (默认安全策略：宁可多问，不可误执行)
 
 | 模型 | 提供商 | API 兼容 | 说明 |
 |------|--------|---------|------|
-| GPT-4o-mini | OpenAI | OpenAI SDK | 性价比高，推理能力稳定 |
-| MiniMax-M2.5 | MiniMax | OpenAI 兼容 | 国产模型，中文理解强 |
-| Doubao-Seed-Code | 字节跳动 | OpenAI 兼容 | 豆包系列，代码与推理能力好 |
 | GLM-5.1 | 智谱AI | OpenAI 兼容 | 智谱旗舰模型，综合能力强 |
 | GLM-5V-Turbo | 智谱AI | OpenAI 兼容 | 智谱轻量快速模型 |
-| Kimi-K2.5 | Moonshot | OpenAI 兼容 | 长上下文能力突出 |
-| Qwen3.6-Plus | 阿里云 | OpenAI 兼容 | 通义千问，中文能力优秀 |
+| GPT-4o-mini | OpenAI | OpenAI SDK | 性价比高，推理能力稳定 |
 
 **模型切换机制**：
 - 后端通过统一的 OpenAI 兼容接口调用所有模型
 - 每个模型配置独立的 `base_url`、`api_key`、`model_name`
 - 前端提供模型选择下拉框，用户可实时切换
 - 决策管线中的 `PipelineTrace` 记录所使用的模型信息
-- 默认模型：GPT-4o-mini
+- 默认模型：GLM-5.1
 
 ---
 

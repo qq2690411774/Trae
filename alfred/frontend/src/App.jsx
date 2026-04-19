@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ScenarioList from './components/ScenarioList';
 import DecisionInput from './components/DecisionInput';
 import DecisionResult from './components/DecisionResult';
 import PipelineView from './components/PipelineView';
 import ApiKeyConfig from './components/ApiKeyConfig';
 import { fetchScenarios, fetchModels, submitDecision, runScenario } from './api';
+
+const DEFAULT_MODEL_ID = 'glm-5.1';
 
 export default function App() {
   const [scenarios, setScenarios] = useState([]);
@@ -14,6 +16,8 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPipeline, setShowPipeline] = useState(false);
+  const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID);
+  const selectedModelIdRef = useRef(DEFAULT_MODEL_ID);
 
   const loadModels = useCallback(() => {
     fetchModels()
@@ -28,6 +32,10 @@ export default function App() {
     loadModels();
   }, [loadModels]);
 
+  useEffect(() => {
+    selectedModelIdRef.current = selectedModelId;
+  }, [selectedModelId]);
+
   const handleScenarioSelect = async (scenario) => {
     setSelectedScenarioId(scenario.id);
     setLoading(true);
@@ -35,7 +43,8 @@ export default function App() {
     setResult(null);
     setShowPipeline(false);
     try {
-      const res = await runScenario(scenario.id);
+      const modelId = selectedModelIdRef.current;
+      const res = await runScenario(scenario.id, modelId);
       setResult(res);
     } catch (e) {
       setError(e.message);
@@ -80,9 +89,29 @@ export default function App() {
         <span style={{ fontSize: '14px', color: '#9ca3af', fontWeight: 400 }}>
           Execution Decision Layer
         </span>
-        <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#6b7280' }}>
-          {availableCount}/{models.length} models available
-        </span>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ fontSize: '12px', color: '#6b7280' }}>
+            {availableCount}/{models.length} models available
+          </div>
+          <select
+            value={selectedModelId}
+            onChange={(e) => setSelectedModelId(e.target.value)}
+            style={{
+              padding: '4px 8px',
+              borderRadius: '4px',
+              border: '1px solid #374151',
+              background: '#1f2937',
+              color: '#e5e7eb',
+              fontSize: '12px',
+            }}
+          >
+            {models.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.provider}{m.id === DEFAULT_MODEL_ID ? ', Default' : ''})
+              </option>
+            ))}
+          </select>
+        </div>
       </header>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
