@@ -1,0 +1,33 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": [
+    {
+      "name": "backend",
+      "source": {
+        "dir": "./backend"
+      },
+      "build": {
+        "command": "pip install -r requirements.txt"
+      },
+      "start": {
+        "command": "uvicorn main:app --host 0.0.0.0 --port $PORT"
+      },
+      "env": {
+        "OPENAI_API_KEY": "",
+        "ZHIPU_API_KEY": ""
+      }
+    },
+    {
+      "name": "frontend",
+      "source": {
+        "dir": "./frontend"
+      },
+      "build": {
+        "command": "npm install && npm run build"
+      },
+      "start": {
+        "command": "npm run preview -- --port $PORT"
+      }
+    }
+  ]
+}
