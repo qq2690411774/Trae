@@ -107,7 +107,7 @@ export default function App() {
           >
             {models.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name} ({m.provider}{m.id === DEFAULT_MODEL_ID ? ', Default' : ''})
+                {m.name} ({m.provider}{m.id === DEFAULT_MODEL_ID ? ' Default' : ''})
               </option>
             ))}
           </select>

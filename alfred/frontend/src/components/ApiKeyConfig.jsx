@@ -2,12 +2,8 @@ import { useState } from 'react';
 import { configureApiKey } from '../api';
 
 const API_KEY_ENV_VARS = [
-  { env_var: 'OPENAI_API_KEY', label: 'OpenAI (GPT-4o-mini)', placeholder: 'sk-...' },
   { env_var: 'ZHIPU_API_KEY', label: 'ZhipuAI (GLM-5.1 / GLM-5V-Turbo)', placeholder: '...' },
-  { env_var: 'MINIMAX_API_KEY', label: 'MiniMax (MiniMax-M2.5)', placeholder: '...' },
-  { env_var: 'DOUBAO_API_KEY', label: 'ByteDance (Doubao-Seed-Code)', placeholder: '...' },
-  { env_var: 'MOONSHOT_API_KEY', label: 'Moonshot (Kimi-K2.5)', placeholder: '...' },
-  { env_var: 'DASHSCOPE_API_KEY', label: 'Alibaba (Qwen3.6-Plus)', placeholder: '...' },
+  { env_var: 'OPENAI_API_KEY', label: 'OpenAI (GPT-4o-mini)', placeholder: 'sk-...' },
 ];
 
 export default function ApiKeyConfig({ models, onKeysUpdated }) {
