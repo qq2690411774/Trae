@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from config import CORS_ORIGINS
@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 挂载API路由
+# 先挂载API路由 - 这很重要，必须在静态文件之前
 app.include_router(router, prefix="/api")
 
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
@@ -36,22 +36,28 @@ def root():
     return {"message": "alfred_ Execution Decision Layer API", "docs": "/docs"}
 
 
-@app.middleware("http")
-async def frontend_middleware(request: Request, call_next):
-    # 如果是API请求，直接通过
-    if request.url.path.startswith("/api") or request.url.path.startswith("/docs") or request.url.path.startswith("/openapi.json"):
-        return await call_next(request)
-    
-    # 尝试调用下一个中间件（正常路由）
-    response = await call_next(request)
-    
-    # 如果是404，返回前端页面
-    if response.status_code == 404:
-        index_path = os.path.join(static_dir, "index.html")
-        if os.path.exists(index_path):
-            return FileResponse(index_path)
-    
-    return response
+@app.get("/favicon.svg")
+def favicon():
+    file_path = os.path.join(static_dir, "favicon.svg")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return {"detail": "Not Found"}
+
+
+@app.get("/icons.svg")
+def icons():
+    file_path = os.path.join(static_dir, "icons.svg")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return {"detail": "Not Found"}
+
+
+@app.get("/assets/{filename:path}")
+def serve_assets(filename: str):
+    file_path = os.path.join(static_dir, "assets", filename)
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return FileResponse(file_path)
+    return {"detail": "Not Found"}
 
 
 @app.get("/health")
