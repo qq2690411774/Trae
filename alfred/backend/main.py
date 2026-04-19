@@ -2,9 +2,9 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from config import CORS_ORIGINS
 from routes import router
 
@@ -62,4 +62,14 @@ def serve_assets(filename: str):
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "static_dir_exists": os.path.exists(static_dir)}
+    return {"status": "ok", "static_dir_exists": os.path.exists(static_dir), "routes": [r.path for r in app.routes]}
+
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc):
+    if request.url.path.startswith('/api'):
+        return JSONResponse(status_code=404, content={"detail": f"API endpoint not found: {request.url.path}"})
+    index_path = os.path.join(static_dir, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return JSONResponse(status_code=404, content={"detail": "Not Found"})
