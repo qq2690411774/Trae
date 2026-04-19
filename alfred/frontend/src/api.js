@@ -25,9 +25,12 @@ export async function submitDecision(decisionInput) {
 export async function runScenario(scenarioId, modelId = null) {
   let url = `${API_BASE}/decision/scenario/${scenarioId}`;
   if (modelId) url += `?model_id=${modelId}`;
+  console.log('Calling runScenario with URL:', url);
   const res = await fetch(url, { method: 'POST' });
   if (!res.ok) throw new Error(`Scenario run failed: ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  console.log('runScenario response:', data);
+  return data;
 }
 
 export async function configureApiKey(envVar, apiKey) {

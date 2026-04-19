@@ -89,15 +89,24 @@ async def list_scenarios():
 
 @router.post("/decision/scenario/{scenario_id}", response_model=DecisionOutput)
 async def run_scenario(scenario_id: int, model_id: str = None):
+    print(f"run_scenario called: scenario_id={scenario_id}, model_id={model_id}")
+    
     scenario = get_scenario_by_id(scenario_id)
     if not scenario:
         raise HTTPException(status_code=404, detail=f"Scenario {scenario_id} not found")
 
-    decision_input = scenario.input
+    input_dict = scenario.input.model_dump()
+    print(f"Scenario {scenario_id} input model_id before: {input_dict.get('model_id')}")
     if model_id:
-        decision_input.model_id = model_id
-
+        input_dict["model_id"] = model_id
+        print(f"Scenario {scenario_id} input model_id after: {input_dict.get('model_id')}")
+    else:
+        print(f"No model_id provided, using default")
+    
+    decision_input = DecisionInput(**input_dict)
+    print(f"DecisionInput model_id: {decision_input.model_id}")
     result = await run_pipeline(decision_input)
+    print(f"Result model_used: {result.model_used}")
     return result
 
 

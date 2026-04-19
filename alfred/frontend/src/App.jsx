@@ -33,6 +33,7 @@ export default function App() {
   }, [loadModels]);
 
   useEffect(() => {
+    console.log('Selected model updated:', selectedModelId);
     selectedModelIdRef.current = selectedModelId;
   }, [selectedModelId]);
 
@@ -44,9 +45,12 @@ export default function App() {
     setShowPipeline(false);
     try {
       const modelId = selectedModelIdRef.current;
+      console.log('Running scenario', scenario.id, 'with model:', modelId);
       const res = await runScenario(scenario.id, modelId);
+      console.log('Scenario result:', res);
       setResult(res);
     } catch (e) {
+      console.error('Error running scenario:', e);
       setError(e.message);
     } finally {
       setLoading(false);

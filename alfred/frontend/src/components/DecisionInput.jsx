@@ -15,7 +15,7 @@ export default function DecisionInput({ models, onSubmit, loading }) {
   const [action, setAction] = useState('');
   const [latestMessage, setLatestMessage] = useState('');
   const [conversationHistory, setConversationHistory] = useState('');
-  const [actionType, setActionType] = useState('other');
+  const [actionType, setActionType] = useState('send_email');
   const [modelId, setModelId] = useState('');
 
   const handleSubmit = (e) => {
@@ -103,10 +103,9 @@ export default function DecisionInput({ models, onSubmit, loading }) {
           onChange={(e) => setModelId(e.target.value)}
           style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }}
         >
-          <option value="">Default</option>
           {models.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.name} ({m.provider}) {!m.available ? '⚠️ No API Key' : '✓'}
+              {m.name} ({m.provider}{m.id === 'glm-5.1' ? ' Default' : ''}) {!m.available ? '⚠️ No API Key' : '✓'}
             </option>
           ))}
         </select>

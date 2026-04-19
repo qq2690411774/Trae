@@ -2,7 +2,7 @@ import os
 from typing import Optional
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=False)
 
 _runtime_api_keys: dict[str, str] = {}
 
