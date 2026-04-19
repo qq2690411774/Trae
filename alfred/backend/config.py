@@ -35,7 +35,13 @@ DEFAULT_MODEL = "glm-5.1"
 LLM_TIMEOUT = 30
 LLM_MAX_RETRIES = 1
 
-CORS_ORIGINS = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://localhost:5174"]
+CORS_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "https://trae-frontend.up.railway.app",
+]
 
 
 def _get_api_key(env_var: str) -> str:
