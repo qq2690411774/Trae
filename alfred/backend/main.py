@@ -65,6 +65,29 @@ def health_check():
     return {"status": "ok", "static_dir_exists": os.path.exists(static_dir), "routes": [r.path for r in app.routes]}
 
 
+@app.get("/api/debug")
+async def debug_info():
+    return {
+        "service": "alfred_ backend",
+        "version": "1.0.0",
+        "environment": {
+            "cwd": os.getcwd(),
+            "port": os.environ.get("PORT", "not set"),
+            "static_dir": static_dir,
+            "static_dir_exists": os.path.exists(static_dir),
+        },
+        "routes": [
+            {
+                "path": getattr(r, 'path', None),
+                "methods": list(getattr(r, 'methods', [])) if hasattr(r, 'methods') else None,
+                "type": type(r).__name__,
+            }
+            for r in app.routes
+        ],
+        "files_in_static": os.listdir(static_dir) if os.path.exists(static_dir) else [],
+    }
+
+
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc):
     if request.url.path.startswith('/api'):
