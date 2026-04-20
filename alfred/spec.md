@@ -1,292 +1,515 @@
-# alfred_ Execution Decision Layer — 总体方案
+# alfred_ Execution Decision Layer — Technical Specification
 
-## 1. 项目概述
+## 1. Project Overview
 
-alfred_ 是一个运行在短信中的 AI 助手，帮助用户管理邮件、日历、提醒和日程。本项目的核心目标是**设计并实现一个执行决策层（Execution Decision Layer）**，决定 alfred_ 在面对用户请求时应该采取何种行动策略。
+alfred_ is an AI assistant that lives in text messages, helping users manage email, calendar, reminders, and scheduling. The core objective of this project is to **design and implement an Execution Decision Layer** that determines which action strategy alfred_ should take when facing user requests.
 
-### 五种决策类型
+### Five Decision Types
 
-| 决策 | 说明 |
-|------|------|
-| **Execute silently** | 静默执行，不打扰用户 |
-| **Execute and tell after** | 执行后通知用户 |
-| **Confirm before executing** | 执行前需用户确认 |
-| **Ask a clarifying question** | 意图/参数不明确，需追问 |
-| **Refuse / escalate** | 拒绝执行或升级处理 |
+| Decision | Description |
+|----------|-------------|
+| **Execute silently** | Execute without notifying the user |
+| **Execute and tell after** | Execute and notify the user after |
+| **Confirm before executing** | Ask for user confirmation before executing |
+| **Ask a clarifying question** | Intent/parameters unclear, need to ask |
+| **Refuse / escalate** | Refuse execution or escalate handling |
+
+### Project Status: ✅ Completed and Deployed
+
+- **Frontend URL**: https://trae-frontend.up.railway.app/
+- **Backend URL**: https://trae-backend.up.railway.app/
+- **GitHub**: https://github.com/qq2690411774/Trae
+- **Local Run**: Frontend `http://localhost:5173/` | Backend `http://localhost:8088`
 
 ---
 
-## 2. 系统架构
+## 2. System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    Frontend (React)                   │
 │  ┌───────────┐ ┌────────────┐ ┌───────────────────┐ │
-│  │ 场景选择器 │ │ 决策提交面板 │ │ 决策详情(管线视图) │ │
+│  │ Scenario   │ │ Decision    │ │ API Key Config     │ │
+│  │ List       │ │ Input Panel │ │ Panel              │ │
 │  └───────────┘ └────────────┘ └───────────────────┘ │
+│  ┌──────────────┐  ┌─────────────────────────────┐   │
+│  │ Decision      │  │ Pipeline View (Pipeline Trace)│   │
+│  │ Result Card   │  │                             │   │
+│  └──────────────┘  └─────────────────────────────┘   │
 └────────────────────────┬────────────────────────────┘
-                         │ HTTP API
+                         │ HTTP API (VITE_API_BASE)
 ┌────────────────────────▼────────────────────────────┐
 │                 Backend (FastAPI)                     │
 │  ┌──────────────────────────────────────────────┐   │
-│  │           Decision Pipeline (决策管线)         │   │
+│  │           Decision Pipeline                    │   │
 │  │                                               │   │
-│  │  1. Input Parser ─── 输入解析与标准化          │   │
-│  │  2. Signal Engine ── 确定性信号计算            │   │
-│  │  3. Prompt Builder ─ 上下文感知的提示词构建     │   │
-│  │  4. LLM Caller ──── 调用大模型推理             │   │
-│  │  5. Output Parser ── 结构化输出解析             │   │
-│  │  6. Decision Finalizer ─ 最终决策与安全兜底     │   │
+│  │  1. Input Parser ─── Input parsing & standardization │
+│  │  2. Signal Engine ── Deterministic signal computation  │
+│  │  3. Prompt Builder ─ Context-aware prompt construction │
+│  │  4. LLM Caller ──── LLM inference call          │   │
+│  │  5. Output Parser ── Structured output parsing  │   │
+│  │  6. Decision Finalizer ─ Final decision & safety fallback │
 │  └──────────────────────────────────────────────┘   │
 │  ┌──────────────┐  ┌──────────────┐                 │
-│  │ Scenario Store│  │ Failure Handler│               │
+│  │ Scenario Store│  │ Model Config │                │
+│  │ (8 scenarios) │  │ (Multi-model)│               │
 │  └──────────────┘  └──────────────┘                 │
 └─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 3. 核心设计：决策管线 (Decision Pipeline)
+## 3. Core Design: Decision Pipeline
 
-### 3.1 输入模型
+### 3.1 Input Model
 
 ```python
 class DecisionInput:
-    action: str                    # 拟执行的动作描述
-    latest_message: str            # 用户最新消息
-    conversation_history: list[str] # 对话历史
-    user_state: dict               # 用户状态（偏好、信任等级等）
-    action_type: str               # 动作类型 (email/calendar/reminder/scheduling)
+    action: str                    # Proposed action description
+    latest_message: str            # User's latest message
+    conversation_history: list[str] # Conversation history
+    user_state: dict               # User state (preferences, trust level, etc.)
+    action_type: ActionType        # Action type enum
+    model_id: Optional[str]        # LLM model ID to use (optional)
+    simulate_timeout: bool         # Simulate LLM timeout (for testing)
+    simulate_malformed: bool       # Simulate malformed output (for testing)
 ```
 
-### 3.2 确定性信号引擎 (Signal Engine)
+**Supported Action Type Enums**:
+- `SEND_EMAIL` - Send email
+- `DRAFT_EMAIL` - Draft email
+- `CREATE_CALENDAR` - Create calendar event
+- `DELETE_CALENDAR` - Delete calendar event
+- `SET_REMINDER` - Set reminder
+- `DELETE_REMINDER` - Delete reminder
+- `SCHEDULE_MEETING` - Schedule meeting
+- `OTHER` - Other type
 
-以下信号由代码**确定性计算**，不依赖 LLM：
+### 3.2 Deterministic Signal Engine
 
-| 信号 | 计算方式 | 用途 |
-|------|---------|------|
-| `action_risk_level` | 基于动作类型的风险映射表 | 判断动作固有风险 |
-| `has_conversation_history` | 历史消息数量 > 0 | 判断是否有上下文 |
-| `user_trust_level` | 用户状态中的信任等级 | 影响静默执行阈值 |
-| `is_irreversible` | 动作类型是否不可逆（如发送邮件） | 触发确认机制 |
-| `involves_external_party` | 是否涉及外部人员 | 提升风险等级 |
-| `has_explicit_confirmation` | 最新消息是否包含确认词 | 判断用户意图 |
+The following signals are **deterministically computed by code**, without relying on the LLM:
 
-**动作风险映射表（初始值）：**
+| Signal | Computation Method | Purpose |
+|--------|-------------------|---------|
+| `action_risk_level` | Risk mapping table based on action type (LOW/MEDIUM/HIGH) | Determine inherent risk of action |
+| `has_conversation_history` | History message count > 0 | Determine if context exists |
+| `user_trust_level` | Trust level from user state (low/medium/high) | Affect silent execution threshold |
+| `is_irreversible` | Whether action type is irreversible (e.g., sending email, deleting calendar) | Trigger confirmation mechanism |
+| `involves_external_party` | Whether external parties are involved | Elevate risk level |
+| `has_explicit_confirmation` | Whether latest message contains confirmation words (bilingual support) | Determine user intent |
+| `history_message_count` | Number of conversation history messages | Evaluate context richness |
+| `has_contradictory_signals` | Both hold and confirm signals exist in history | Detect conflicting instructions |
 
-| 动作类型 | 固有风险 | 不可逆 | 涉及外部 |
-|---------|---------|--------|---------|
-| 发送邮件 | 高 | 是 | 是 |
-| 日程创建 | 低 | 否 | 可能 |
-| 日程删除 | 中 | 是 | 可能 |
-| 提醒设置 | 低 | 否 | 否 |
-| 提醒删除 | 低 | 否 | 否 |
-| 邮件草稿 | 低 | 否 | 否 |
+**Action Risk Mapping Table (Implemented):**
 
-### 3.3 LLM 职责划分
+| Action Type | Inherent Risk | Irreversible | Involves External |
+|-------------|---------------|--------------|-------------------|
+| SEND_EMAIL | HIGH | ✅ | ✅ |
+| DRAFT_EMAIL | LOW | ❌ | ❌ |
+| CREATE_CALENDAR | LOW | ❌ | ✅ |
+| DELETE_CALENDAR | MEDIUM | ✅ | ✅ |
+| SET_REMINDER | LOW | ❌ | ❌ |
+| DELETE_REMINDER | LOW | ❌ | ❌ |
+| SCHEDULE_MEETING | MEDIUM | ❌ | ✅ |
+| OTHER | MEDIUM | ❌ | ❌ |
 
-**LLM 负责（需要语义理解）：**
-- 分析对话历史中的意图演变
-- 判断意图是否已完全解析
-- 识别关键参数是否缺失
-- 评估上下文中的风险信号
-- 生成决策理由
+**Confirmation Word Detection (Bilingual Support):**
+- English: "yes", "yep", "yeah", "sure", "ok", "okay", "send it", "go ahead", "do it", "confirm", "approved", "proceed", "go for it"
+- Chinese: "发吧", "确认", "发送吧", "好的", "可以", "没问题", "执行吧", "同意", "就这样"
 
-**代码负责（确定性逻辑）：**
-- 动作风险等级映射
-- 不可逆动作检测
-- 确认词检测
-- 安全兜底（LLM 超时/异常时的默认行为）
-- 最终决策的规则覆盖（如：高风险 + 不可逆 → 必须确认）
+**Hold Word Detection (for identifying pause instructions):**
+- English: "wait", "hold", "hold off", "stop", "cancel", "not yet", "don't"
+- Chinese: "等一下", "等等", "先别", "暂停", "取消", "不要"
 
-### 3.4 Prompt 设计
+### 3.3 LLM vs Code Responsibility Division
 
-采用结构化 Prompt，包含以下部分：
+**LLM Responsibilities (requires semantic understanding):**
+- Analyze intent evolution in conversation history
+- Determine if intent is fully resolved
+- Identify if key parameters are missing
+- Evaluate risk signals in context
+- Generate structured JSON decision output (decision, confidence, intent_resolved, key_parameters, risk_assessment, rationale)
+
+**Code Responsibilities (deterministic logic):**
+- Action risk level mapping
+- Irreversible action detection
+- Confirmation word / Hold word detection (bilingual)
+- Conversation history contradiction signal detection
+- Safety fallback rule engine (default behavior when LLM times out/errors)
+- Final decision rule override and correction
+- High-risk action forced rejection (batch deletion, sensitive data leakage to competitors, etc.)
+
+### 3.4 Prompt Design
+
+Uses structured prompt with the following parts:
 
 ```
-System: 你是 alfred_ 的执行决策引擎。根据动作和上下文，决定应该采取哪种执行策略。
+System: You are alfred_'s Execution Decision Engine. Given a proposed action and context, decide which execution strategy to take.
 
-## 可选决策
-1. EXECUTE_SILENTLY - 静默执行
-2. EXECUTE_AND_TELL - 执行后通知
-3. CONFIRM_FIRST - 执行前确认
-4. ASK_CLARIFYING - 追问澄清
-5. REFUSE_ESCALATE - 拒绝/升级
+## Available Decisions
+1. EXECUTE_SILENTLY - Execute without notifying the user
+2. EXECUTE_AND_TELL - Execute and notify the user after
+3. CONFIRM_FIRST - Ask for user confirmation before executing
+4. ASK_CLARIFYING - Ask a clarifying question (intent, entity, or key parameters unresolved)
+5. REFUSE_ESCALATE - Refuse the action or escalate to human
 
-## 决策边界
-- 当意图、实体或关键参数未解决时 → ASK_CLARIFYING
-- 当意图已解决但风险高于静默执行阈值时 → CONFIRM_FIRST
-- 当策略禁止该动作，或澄清后风险仍过高时 → REFUSE_ESCALATE
+## Decision Boundaries
+- ASK_CLARIFYING when intent, entity, or key parameters are unresolved.
+- CONFIRM_FIRST when intent is resolved but risk is above the silent execution threshold.
+- REFUSE_ESCALATE when policy disallows the action, or risk/uncertainty remains too high even after clarification.
 
-## 确定性信号
-{signals_json}
+## Deterministic Signals (pre-computed by code)
+{signals_json}  // JSON object containing all 8 signals
 
-## 输出格式（严格JSON）
+## Output Format (strict JSON, no markdown, no extra text)
 {
-  "decision": "<决策类型>",
+  "decision": "<Decision Type>",
   "confidence": <0-1>,
   "intent_resolved": <bool>,
-  "key_parameters": {<参数名>: <是否已解析>},
-  "risk_assessment": "<低/中/高>",
-  "rationale": "<简洁理由>"
+  "key_parameters": {<param_name>: <resolved bool>},
+  "risk_assessment": "<LOW/MEDIUM/HIGH>",
+  "rationale": "<concise reason>"
 }
 
 User:
-动作: {action}
-最新消息: {latest_message}
-对话历史: {conversation_history}
+Action: {action}
+Latest message: {latest_message}
+Conversation history:
+  [1] {msg1}
+  [2] {msg2}
+  ...
 ```
 
-### 3.5 安全兜底规则
+### 3.5 Safety Fallback Rules (Decision Finalizer)
 
-当 LLM 不可用或输出异常时，按以下确定性规则兜底：
+When LLM is unavailable or output is abnormal, follow these **layered deterministic rules**:
 
+**Layer 1: High-Risk Action Forced Rejection**
+```python
+IF batch deletion keywords in action_text ("delete all", "remove all", "clear all" etc.)
+   OR (competitor keywords AND sensitive info keywords) in action_text:
+   → REFUSE_ESCALATE
 ```
-IF 不可逆动作 AND 涉及外部 → CONFIRM_FIRST
-IF 不可逆动作 AND 无明确确认 → CONFIRM_FIRST
-IF 关键上下文缺失 → ASK_CLARIFYING
-IF 动作在拒绝策略列表中 → REFUSE_ESCALATE
-ELSE → CONFIRM_FIRST  (默认安全策略：宁可多问，不可误执行)
+
+**Layer 2: Tiered Handling When LLM Unavailable**
+```python
+IF critical context missing (action or latest_message is empty):
+   → ASK_CLARIFYING
+
+ELIF high risk AND no explicit confirmation:
+   → ASK_CLARIFYING
+
+ELIF low risk AND irreversible AND has confirmation:
+   → EXECUTE_AND_TELL
+
+ELIF low risk AND reversible AND has confirmation:
+   → EXECUTE_AND_TELL
+
+ELIF low risk AND reversible AND no confirmation:
+   → EXECUTE_SILENTLY
+
+ELSE:
+   → CONFIRM_FIRST  # Default safety strategy: better to ask than to mistakenly execute
+```
+
+**Layer 3: Rule Override in Normal Cases**
+```python
+IF intent unresolved AND decision is EXECUTE_SILENTLY:
+   → ASK_CLARIFYING  # Correct to ask for clarification
+
+IF irreversible AND involves external AND decision is EXECUTE_SILENTLY:
+   → CONFIRM_FIRST  # Force requirement for confirmation
+
+IF irreversible AND no confirmation word AND decision is EXECUTE_SILENTLY:
+   → CONFIRM_FIRST  # Force requirement for confirmation
+
+IF contradictory signals exist AND decision is silent-type:
+   → CONFIRM_FIRST  # Require confirmation to eliminate ambiguity
 ```
 
 ---
 
-## 4. 前端设计
+## 4. Frontend Design
 
-### 4.1 页面布局
+### 4.1 Page Layout
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  alfred_ Execution Decision Layer                │
+│  alfred_ Execution Decision Layer     [Model ▼] │
 ├─────────────────────┬───────────────────────────┤
 │                     │                           │
-│   预置场景列表        │    决策详情 (Pipeline)      │
-│   ┌───────────────┐ │  ┌─────────────────────┐  │
-│   │ ✓ 场景1: 简单  │ │  │ 1. Inputs           │  │
-│   │ ○ 场景2: 简单  │ │  │ 2. Signals          │  │
-│   │ ○ 场景3: 模糊  │ │  │ 3. Prompt           │  │
-│   │ ○ 场景4: 模糊  │ │  │ 4. Raw LLM Output   │  │
-│   │ ○ 场景5: 风险  │ │  │ 5. Final Decision   │  │
-│   │ ○ 场景6: 风险  │ │  └─────────────────────┘  │
+│   Preloaded Scenarios│    ⚠️ Error: Failed to...│
+│   ┌───────────────┐ │  (or decision result)      │
+│   │ 1. Set reminder│ │                           │
+│   │ 2. Team meeting│ │  ┌─────────────────────┐  │
+│   │ 3. Send email  │ │  │ Decision Result Card │  │
+│   │ 4. Hold signal │ │  │ ✅ CONFIRM_FIRST     │  │
+│   │ 5. Delete cal  │ │  │ Confidence: 0.85     │  │
+│   │ 6. Send contract│ │  │ Rationale: ...       │  │
+│   │ 7. LLM Timeout │ │  └─────────────────────┘  │
+│   │ 8. Malformed   │ │                           │
+│   └───────────────┘ │  [Show Pipeline ▼]         │
+│                     │                           │
+│   Custom Input       │  Pipeline View (if shown): │
+│   ┌───────────────┐ │  1. Inputs                │
+│   │ Action Type ▼ │ │  2. Signals               │
+│   │ Action *      │ │  3. Prompt                │
+│   │ Message *     │ │  4. Raw LLM Output        │
+│   │ History *     │ │  5. Final Decision        │
+│   │ LLM Model ▼  │ │                           │
+│   │[Submit]       │ │                           │
 │   └───────────────┘ │                           │
 │                     │                           │
-│   自定义输入         │    决策结果卡片              │
-│   ┌───────────────┐ │  ┌─────────────────────┐  │
-│   │ Action:       │ │  │ ✅ CONFIRM_FIRST     │  │
-│   │ Message:      │ │  │ Confidence: 0.85     │  │
-│   │ History:      │ │  │ Rationale: ...       │  │
-│   │ [Submit]      │ │  └─────────────────────┘  │
-│   └───────────────┘ │                           │
+│ 🔑 API Key Config  │                           │
+│ [▶ Click to expand]│                           │
 └─────────────────────┴───────────────────────────┘
 ```
 
-### 4.2 核心交互
+### 4.2 Core Components
 
-1. **场景选择**：点击预置场景，自动填充输入并执行决策
-2. **自定义提交**：手动输入动作和上下文，提交获取决策
-3. **管线展开**：点击任意决策结果，展开查看完整管线（输入→信号→Prompt→LLM输出→最终决策）
-4. **失败演示**：至少一个场景展示 LLM 超时/异常的兜底行为
+| Component | File | Functionality |
+|-----------|------|---------------|
+| App.jsx | src/App.jsx | Main app, state management, layout orchestration |
+| ScenarioList | components/ScenarioList.jsx | Preloaded scenario list display and selection |
+| DecisionInput | components/DecisionInput.jsx | Custom input form (Action Type, Action, Message, History, Model) |
+| DecisionResult | components/DecisionResult.jsx | Decision result card (decision type, confidence, rationale, risk assessment) |
+| PipelineView | components/PipelineView.jsx | Full pipeline display (5 expandable steps) |
+| ApiKeyConfig | components/ApiKeyConfig.jsx | API Key runtime configuration panel |
+| api.js | src/api.js | API call wrapper (fetchScenarios, fetchModels, submitDecision, runScenario, configureApiKey) |
 
----
+### 4.3 Core Interaction Flow
 
-## 5. 技术选型
-
-| 组件 | 技术 | 理由 |
-|------|------|------|
-| 后端框架 | FastAPI | 轻量、异步、自动生成API文档 |
-| 前端框架 | React + Vite | 快速开发，简单UI足够 |
-| LLM | 多模型可选（见下表） | 灵活切换，兼容不同场景与成本需求 |
-| 部署 | 本地运行（可部署到 Vercel/Railway） | 满足挑战要求 |
-
-### 5.1 支持的 LLM 模型
-
-| 模型 | 提供商 | API 兼容 | 说明 |
-|------|--------|---------|------|
-| GLM-5.1 | 智谱AI | OpenAI 兼容 | 智谱旗舰模型，综合能力强 |
-| GLM-5V-Turbo | 智谱AI | OpenAI 兼容 | 智谱轻量快速模型 |
-| GPT-4o-mini | OpenAI | OpenAI SDK | 性价比高，推理能力稳定 |
-
-**模型切换机制**：
-- 后端通过统一的 OpenAI 兼容接口调用所有模型
-- 每个模型配置独立的 `base_url`、`api_key`、`model_name`
-- 前端提供模型选择下拉框，用户可实时切换
-- 决策管线中的 `PipelineTrace` 记录所使用的模型信息
-- 默认模型：GLM-5.1
+1. **Page Load**: Automatically fetch scenarios and models list
+2. **Scenario Selection**: Click preloaded scenario, auto-fill input with selected model and execute decision
+3. **Custom Submission**: Manually fill Action Type, Action, Message, History, select model, click Submit
+4. **Pipeline Expansion**: Click "Show Pipeline ▼" to view full pipeline 5 steps
+5. **API Key Configuration**: Expand bottom panel, configure ZhipuAI or OpenAI API Key
+6. **Failure Demonstration**: Scenario 7 (LLM Timeout) and Scenario 8 (Malformed Output) showcase fallback behavior
 
 ---
 
-## 6. 预置场景设计
+## 5. Technology Stack
 
-### 场景1（简单 - 静默执行）
-- **动作**: 设置提醒"下午3点喝水"
-- **最新消息**: "提醒我下午3点喝水"
-- **预期决策**: EXECUTE_SILENTLY — 低风险、不可逆、意图明确
+| Component | Technology | Version | Rationale |
+|-----------|------------|---------|-----------|
+| Backend Framework | FastAPI | >=0.104.0 | Lightweight, async, auto-generates API docs |
+| ASGI Server | Uvicorn | >=0.24.0 | High-performance async server |
+| Frontend Framework | React + Vite | Vite 8.0.8 | Rapid development, HMR hot reload |
+| LLM SDK | OpenAI Python | >=1.0.0 | Unified interface compatible with multiple model providers |
+| Data Validation | Pydantic | >=2.0.0 | Type-safe data models |
+| Environment Management | python-dotenv | >=1.0.0 | .env file support |
+| Deployment Platform | Railway | - | Auto-deployment, CI/CD support |
 
-### 场景2（简单 - 执行后通知）
-- **动作**: 创建日历事件"周五团队会议"
-- **最新消息**: "帮我安排周五下午2点团队会议"
-- **预期决策**: EXECUTE_AND_TELL — 低风险、意图明确、涉及他人但风险可控
+### 5.1 Supported LLM Models
 
-### 场景3（模糊 - 需追问）
-- **动作**: 发送邮件
-- **最新消息**: "帮我发个邮件"
-- **预期决策**: ASK_CLARIFYING — 缺少收件人、主题、内容等关键参数
+| Model ID | Name | Provider | Base URL | API Key Env Variable | Default |
+|----------|------|----------|----------|---------------------|---------|
+| glm-5.1 | GLM-5.1 | ZhipuAI | https://open.bigmodel.cn/api/paas/v4 | ZHIPU_API_KEY | ✅ |
+| glm-5v-turbo | GLM-5V-Turbo | ZhipuAI | https://open.bigmodel.cn/api/paas/v4 | ZHIPU_API_KEY | |
+| gpt-4o-mini | GPT-4o-mini | OpenAI | https://api.openai.com/v1 | OPENAI_API_KEY | |
 
-### 场景4（模糊 - 上下文冲突需确认）
-- **动作**: 发送邮件回复外部合作伙伴
-- **最新消息**: "发吧"
-- **对话历史**: 用户之前让 alfred_ 起草给 Acme 的回复（提议20%折扣）；alfred_ 起草后请求确认；用户说"等法务审核完再发"；几分钟后用户说"发吧"
-- **预期决策**: CONFIRM_FIRST — 意图可能已变，但上下文有矛盾（法务审核状态不明），需确认
+**Model Switching Mechanism:**
+- All models called through unified OpenAI-compatible interface
+- Frontend provides model selection dropdown for real-time switching
+- PipelineTrace records actual model usage information
+- API Keys configurable via frontend UI (stored in memory)
 
-### 场景5（风险 - 拒绝执行）
-- **动作**: 删除所有日历事件
-- **最新消息**: "帮我把日历全删了"
-- **预期决策**: REFUSE_ESCALATE — 批量删除不可逆、风险极高
+### 5.2 CORS Configuration
 
-### 场景6（风险 - 需确认的高风险操作）
-- **动作**: 发送含敏感信息的邮件给外部
-- **最新消息**: "把这个合同条款发给竞争对手公司"
-- **预期决策**: REFUSE_ESCALATE 或 CONFIRM_FIRST — 涉及敏感信息外泄风险
-
----
-
-## 7. 失败处理设计
-
-| 失败类型 | 处理策略 | UI 展示 |
-|---------|---------|--------|
-| LLM 超时 | 触发确定性兜底规则，默认 CONFIRM_FIRST | 显示 ⚠️ 超时警告 + 兜底决策说明 |
-| 模型输出格式异常 | 尝试 JSON 修复；失败则走兜底规则 | 显示 ⚠️ 输出解析失败 + 原始输出 |
-| 关键上下文缺失 | 直接 ASK_CLARIFYING | 显示 ⚠️ 上下文不足提示 |
+```python
+CORS_ORIGINS = [
+    "http://localhost:5173",      # Local development
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "https://trae-frontend.up.railway.app",  # Production environment
+]
+```
 
 ---
 
-## 8. 项目目录结构
+## 6. Preloaded Scenarios (8 Scenarios)
+
+### Scenario Category Statistics
+
+| Category | Count | Scenario IDs |
+|----------|-------|--------------|
+| Easy | 2 | 1, 2 |
+| Ambiguous | 2 | 3, 4 |
+| Risky | 2 | 5, 6 |
+| Failure Simulation | 2 | 7, 8 |
+
+### Detailed Scenario List
+
+#### Scenario 1 (Easy - Silent Execution)
+- **Title**: Set a reminder to drink water
+- **Action**: Set reminder: drink water at 3pm
+- **Latest Message**: Remind me to drink water at 3pm
+- **Action Type**: SET_REMINDER
+- **Expected Decision**: EXECUTE_SILENTLY
+- **Expected Rationale**: Low risk, reversible, clear intent with all parameters resolved.
+
+#### Scenario 2 (Easy - Execute and Tell)
+- **Title**: Schedule a team meeting
+- **Action**: Create calendar event: team meeting Friday 2pm
+- **Latest Message**: Schedule a team meeting on Friday at 2pm
+- **Action Type**: SCHEDULE_MEETING
+- **Expected Decision**: EXECUTE_AND_TELL
+- **Expected Rationale**: Low risk, clear intent, involves others but manageable. Execute and notify.
+
+#### Scenario 3 (Ambiguous - Ask Clarifying)
+- **Title**: Send an email (missing details)
+- **Action**: Send email
+- **Latest Message**: Send an email for me
+- **Action Type**: SEND_EMAIL
+- **Expected Decision**: ASK_CLARIFYING
+- **Expected Rationale**: Missing recipient, subject, and content. Key parameters unresolved.
+
+#### Scenario 4 (Ambiguous - Context Conflict Requires Confirmation)
+- **Title**: Send email after hold signal
+- **Action**: Send email reply to external partner (Acme Corp)
+- **Latest Message**: Yep, send it
+- **Conversation History**:
+  ```
+  User: Draft a reply to Acme proposing a 20% discount
+  alfred_: I've drafted the email. Shall I send it?
+  User: Actually hold off until legal reviews pricing language
+  User: Yep, send it
+  ```
+- **Action Type**: SEND_EMAIL
+- **Expected Decision**: CONFIRM_FIRST
+- **Expected Rationale**: Contradictory signals: user previously said to hold off for legal review. Current status of legal review is unclear. Must confirm before sending.
+
+#### Scenario 5 (Risky - Refuse Execution)
+- **Title**: Delete all calendar events
+- **Action**: Delete all calendar events
+- **Latest Message**: Delete all my calendar events
+- **Action Type**: DELETE_CALENDAR
+- **Expected Decision**: REFUSE_ESCALATE
+- **Expected Rationale**: Batch deletion of all calendar events is extremely high risk and irreversible. Refusing and escalating to human review.
+
+#### Scenario 6 (Risky - Refuse Sensitive Data Leakage)
+- **Title**: Send contract to competitor
+- **Action**: Send email with contract terms to competitor company
+- **Latest Message**: Send the contract terms to our competitor
+- **Action Type**: SEND_EMAIL
+- **Expected Decision**: REFUSE_ESCALATE
+- **Expected Rationale**: Sending contract terms to a competitor poses severe confidentiality and legal risks. Refusing and escalating.
+
+#### Scenario 7 (Failure - LLM Timeout Simulation)
+- **Title**: LLM Timeout Simulation
+- **Action**: Delete calendar event: old team sync
+- **Latest Message**: Delete the old team sync from my calendar
+- **Action Type**: DELETE_CALENDAR
+- **Special Setting**: simulate_timeout=True
+- **Expected Decision**: CONFIRM_FIRST
+- **Expected Rationale**: LLM timeout fallback: irreversible action involving external party, defaulting to CONFIRM_FIRST for safety.
+- **UI Display**: ⚠️ Timeout warning + fallback decision explanation
+
+#### Scenario 8 (Failure - Malformed Output Simulation)
+- **Title**: Malformed Output Simulation
+- **Action**: Set reminder for team lunch
+- **Latest Message**: Remind me about the team lunch tomorrow
+- **Action Type**: SET_REMINDER
+- **Special Setting**: simulate_malformed=True
+- **Expected Decision**: CONFIRM_FIRST
+- **Expected Rationale**: Malformed LLM output fallback: defaulting to CONFIRM_FIRST for safety.
+- **UI Display**: ⚠️ Output parse failure + raw output display
+
+---
+
+## 7. Failure Handling Design
+
+| Failure Type | Trigger Method | Handling Strategy | UI Display |
+|-------------|----------------|-------------------|------------|
+| LLM Timeout | simulate_timeout=True or actual timeout (>30s) | Trigger deterministic fallback rule engine, tiered handling based on signals | Show ⚠️ timeout warning + fallback_used=true + fallback decision explanation |
+| Malformed Model Output | simulate_malformed=True or non-JSON output | Attempt JSON extraction and repair; fall back to rules on failure | Show ⚠️ output parse failure + raw_llm_output |
+| Model Not Configured | No API Key set | Return MODEL_NOT_CONFIGURED error | Frontend shows models available = 0 |
+| Missing Critical Context | action/latest_message is empty | Directly ASK_CLARIFYING | Show ⚠️ insufficient context warning |
+
+---
+
+## 8. API Endpoints
+
+| Method | Endpoint | Function | Request Body | Response |
+|--------|----------|----------|--------------|----------|
+| POST | /api/decision | Submit custom decision request | DecisionInput | DecisionOutput + PipelineTrace |
+| GET | /api/scenarios | Get preloaded scenario list | - | list[Scenario] (8 items) |
+| POST | /api/decision/scenario/{id} | Execute specified preloaded scenario | query: model_id? | DecisionOutput + PipelineTrace |
+| GET | /api/models | Get available model list | - | list[ModelInfo] |
+| POST | /api/models/api-key | Configure API Key | {env_var, api_key} | {status, configured, models_updated} |
+| GET | /health | Health check | - | {"status": "ok"} |
+| GET | /api/debug | Debug information | - | Service config, routes, file listing |
+
+---
+
+## 9. Project Directory Structure
 
 ```
 alfred/
 ├── backend/
-│   ├── main.py              # FastAPI 入口
-│   ├── models.py            # 数据模型
+│   ├── main.py                  # FastAPI entry point, static file serving, CORS config
+│   ├── models.py                # Pydantic data models (12 model classes)
+│   ├── config.py                # Configuration (LLM models, CORS, API Key management)
+│   ├── routes.py                # API route definitions (7 endpoints)
+│   ├── scenarios.py             # 8 preloaded scenario definitions
 │   ├── pipeline/
 │   │   ├── __init__.py
-│   │   ├── input_parser.py  # 输入解析
-│   │   ├── signal_engine.py # 确定性信号计算
-│   │   ├── prompt_builder.py# Prompt 构建
-│   │   ├── llm_caller.py    # LLM 调用
-│   │   ├── output_parser.py # 输出解析
-│   │   └── decision_finalizer.py # 决策定稿与安全兜底
-│   ├── scenarios.py         # 预置场景
-│   └── config.py            # 配置
+│   │   ├── input_parser.py      # Input parsing & standardization
+│   │   ├── signal_engine.py     # Deterministic signal computation (8 signals)
+│   │   ├── prompt_builder.py    # Structured prompt construction
+│   │   ├── llm_caller.py        # LLM invocation (multi-model, timeout, retry, simulation)
+│   │   ├── output_parser.py     # Structured output parsing (JSON extraction, repair, degradation)
+│   │   └── decision_finalizer.py # Decision finalization & safety fallback (multi-layer rule engine)
+│   ├── requirements.txt         # Python dependencies
+│   ├── .env.example             # Environment variable example
+│   └── Procfile                 # Railway deployment configuration
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx
-│   │   ├── components/
-│   │   │   ├── ScenarioList.jsx
-│   │   │   ├── DecisionInput.jsx
-│   │   │   ├── DecisionResult.jsx
-│   │   │   └── PipelineView.jsx
-│   │   └── api.js
-│   └── package.json
-├── README.md
-└── requirement.md
+│   │   ├── main.jsx             # React entry point
+│   │   ├── App.jsx              # Main application component
+│   │   ├── api.js               # API call wrapper
+│   │   ├── index.css            # Global styles
+│   │   └── components/
+│   │       ├── ScenarioList.jsx     # Scenario list component
+│   │       ├── DecisionInput.jsx    # Custom input component
+│   │       ├── DecisionResult.jsx   # Decision result component
+│   │       ├── PipelineView.jsx     # Pipeline view component
+│   │       └── ApiKeyConfig.jsx     # API Key configuration component
+│   ├── public/                   # Static assets
+│   ├── .env.production           # Production environment API URL
+│   ├── vite.config.js            # Vite configuration (proxy, port)
+│   ├── package.json              # Node dependencies
+│   └── index.html                # HTML entry point
+├── Procfile                      # Root Procfile
+├── requirement.md                # Original requirements document
+├── spec.md                       # This document - Technical specification
+├── tasks.md                      # Task checklist
+├── checklist.md                  # Test checklist
+└── README.md                     # Project documentation
 ```
+
+---
+
+## 10. Design Highlights & Trade-offs
+
+### 10.1 Signal System Design Philosophy
+
+Adopts **hybrid architecture**: deterministic signals (code) + semantic understanding (LLM), each playing to their strengths:
+- **Code excels at**: Rule matching, pattern recognition, edge case handling
+- **LLM excels at**: Context understanding, intent inference, natural language reasoning
+- **Safety first**: Any uncertainty tends toward more conservative decisions
+
+### 10.2 Value of Multi-Model Support
+
+- **Flexibility**: Choose different models based on cost, latency, and capability
+- **Fault tolerance**: Quick switch when single model fails
+- **Experimentation**: Convenient comparison of decision quality across models
+- **Runtime configuration**: Switch models and update API keys without restarting service
+
+### 10.3 Transparency of Failure Modes
+
+- **PipelineTrace completely records** input/output of every step
+- **fallback_used flag** clearly identifies whether fallback logic was used
+- **error field** records original error information
+- **Frontend visualization** displays warning icons and detailed explanations
