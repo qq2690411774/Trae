@@ -1,4 +1,0 @@
-risk=RiskLevel.LOW
-irreversible=False
-external=True
-confirmation=False

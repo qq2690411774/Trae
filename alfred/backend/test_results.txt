@@ -1,5 +1,0 @@
-Root: OK (HTML)
-Health: ERROR - HTTP Error 404: File not found
-Scenarios: ERROR - HTTP Error 404: File not found
-Models: ERROR - HTTP Error 404: File not found
-OpenAPI: ERROR - HTTP Error 404: File not found
